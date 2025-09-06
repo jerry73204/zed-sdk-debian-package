@@ -1,6 +1,6 @@
 # Maintainer: Hsiang-Jui Lin <jerry73204@gmail.com>
 pkgname=zed-sdk
-pkgver=4.2
+pkgver=5.0.5
 pkgrel=1
 pkgdesc="StereoLabs ZED SDK"
 arch=('amd64' 'arm64')
@@ -72,39 +72,31 @@ postrm='postrm.sh'
 CARCH=$(dpkg --print-architecture)
 
 if [ "${CARCH}" = "amd64" ]; then
-    run_file="ZED_SDK_Ubuntu22_cuda12_v${pkgver}.run"
-    whl_file="pyzed-${pkgver}-cp310-cp310-linux_x86_64.whl"
+    run_file="ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v${pkgver}.zstd.run"
 else
-    run_file="ZED_SDK_Tegra_L4T36.3_v${pkgver}.run"
-    whl_file="pyzed-${pkgver}-cp310-cp310-linux_aarch64.whl"
+    run_file="ZED_SDK_Tegra_L4T36.4_v${pkgver}.zstd.run"
 fi
 
 source_amd64=(
-    "${run_file}::https://download.stereolabs.com/zedsdk/${pkgver}/cu12/ubuntu22"
-    "${whl_file}::https://stereolabs.sfo2.digitaloceanspaces.com/zedsdk/${pkgver}/whl/linux_x86_64/pyzed-${pkgver}-cp310-cp310-linux_x86_64.whl"
+    "${run_file}::https://download.stereolabs.com/zedsdk/5.0/cu12/ubuntu22"
     "python_shebang.patch"
     "zed_download_ai_models"
 )
 source_arm64=(
-    "${run_file}::https://download.stereolabs.com/zedsdk/${pkgver}/l4t36.3/jetsons"
-    "${whl_file}::https://download.stereolabs.com/zedsdk/${pkgver}/whl/linux_aarch64/pyzed-${pkgver}-cp310-cp310-linux_aarch64.whl"
+    "${run_file}::https://download.stereolabs.com/zedsdk/5.0/l4t36.4/jetsons"
     "python_shebang.patch"
     "zed_download_ai_models"
 )
 
-noextract=(
-    "${whl_file}"
-)
+noextract=()
 
 sha256sums_amd64=(
-    'c03f3e0a91512182a42a52e77d9b7ad76a044e3899b55b267c334cd6effe5844'
-    '13cd739ea3510bc15a1fcf3fc22fcd485df42c95453eaff0a9658b6cd1b5293a'
+    '71836b2dc0d1b1f164554be9435c14f996cc279ac67be0cd2d5f16d8b12c0102'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
 )
 sha256sums_arm64=(
-    '34ede11ba659a9b501f55ad262885cafb1c320cfc5cfba8da0407f7c6d84a2ed'
-    'c22dfbb15790928f5a1d7179b61317549c91edf1311aface4d12cb413f395e99'
+    'SKIP'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
 )
@@ -169,19 +161,18 @@ package() {
   # Install udev rules
   install -Dm644 "99-slabs.rules" "${pkgdir}/etc/udev/rules.d/99-slabs.rules"
 
-  # Install ld.so.conf.d file
-  install -Dm644 "zed.conf" "${pkgdir}/etc/ld.so.conf.d/zed.conf"
+  # Create and install ld.so.conf.d file
+  echo "/usr/local/zed/lib" > "${srcdir}/zed.conf"
+  install -Dm644 "${srcdir}/zed.conf" "${pkgdir}/etc/ld.so.conf.d/zed.conf"
 
-  # Install ZEDMediaServer service
-  if [ "${CARCH}" = "arm64" ]; then
+  # Install ZEDMediaServer service (if available)
+  if [ "${CARCH}" = "arm64" ] && [ -f "zed_media_server_cli.service" ]; then
       install -Dm644 "zed_media_server_cli.service" "${pkgdir}/etc/systemd/system/zed_media_server_cli.service"
   fi
 
   # Create the doc directory
   cp -a -t "${pkgdir}/usr/local/zed" doc
 
-  # Install the wheel into the package directory
-  PYTHONUSERBASE="$pkgdir/usr" \
-		python3 -m pip install --no-deps --root="${pkgdir}" --prefix=/usr --ignore-installed \
-		"${srcdir}/${whl_file}"
+  # Note: Python API installation will be handled by the get_python_api.py script
+  # which users can run after installation
 }
