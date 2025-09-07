@@ -71,31 +71,42 @@ postrm='postrm.sh'
 
 CARCH=$(dpkg --print-architecture)
 
+# Extract major.minor version for wheel downloads (5.0.5 -> 5.0)
+_ver_major_minor=$(echo ${pkgver} | cut -d. -f1-2)
+
 if [ "${CARCH}" = "amd64" ]; then
     run_file="ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v${pkgver}.zstd.run"
+    whl_file="pyzed-${_ver_major_minor}-cp310-cp310-linux_x86_64.whl"
 else
     run_file="ZED_SDK_Tegra_L4T36.4_v${pkgver}.zstd.run"
+    whl_file="pyzed-${_ver_major_minor}-cp310-cp310-linux_aarch64.whl"
 fi
 
 source_amd64=(
     "${run_file}::https://download.stereolabs.com/zedsdk/5.0/cu12/ubuntu22"
+    "${whl_file}::https://download.stereolabs.com/zedsdk/${_ver_major_minor}/whl/linux_x86_64/${whl_file}"
     "python_shebang.patch"
     "zed_ai_optimizer"
 )
 source_arm64=(
     "${run_file}::https://download.stereolabs.com/zedsdk/5.0/l4t36.4/jetsons"
+    "${whl_file}::https://download.stereolabs.com/zedsdk/${_ver_major_minor}/whl/linux_aarch64/${whl_file}"
     "python_shebang.patch"
     "zed_ai_optimizer"
 )
 
-noextract=()
+noextract=(
+    "${whl_file}"
+)
 
 sha256sums_amd64=(
     '71836b2dc0d1b1f164554be9435c14f996cc279ac67be0cd2d5f16d8b12c0102'
+    '5cbca12a0d2d4c362b78a015bf8eb878601905af35292513dd4c9ab1771bc00a'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     '3b521098392097553a949fc5bbb8c420ad9eb0888a447533aa494a1949646a4e'
 )
 sha256sums_arm64=(
+    'SKIP'
     'SKIP'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     '3b521098392097553a949fc5bbb8c420ad9eb0888a447533aa494a1949646a4e'
@@ -173,6 +184,7 @@ package() {
   # Create the doc directory
   cp -a -t "${pkgdir}/usr/local/zed" doc
 
-  # Note: Python API installation will be handled by the get_python_api.py script
-  # which users can run after installation
+  # Install Python wheel
+  python3 -m pip install --no-deps --root="${pkgdir}" --prefix=/usr \
+    --ignore-installed "${srcdir}/${whl_file}"
 }
