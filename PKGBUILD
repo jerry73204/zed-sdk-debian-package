@@ -80,12 +80,12 @@ fi
 source_amd64=(
     "${run_file}::https://download.stereolabs.com/zedsdk/5.0/cu12/ubuntu22"
     "python_shebang.patch"
-    "zed_download_ai_models"
+    "zed_ai_optimizer"
 )
 source_arm64=(
     "${run_file}::https://download.stereolabs.com/zedsdk/5.0/l4t36.4/jetsons"
     "python_shebang.patch"
-    "zed_download_ai_models"
+    "zed_ai_optimizer"
 )
 
 noextract=()
@@ -93,12 +93,12 @@ noextract=()
 sha256sums_amd64=(
     '71836b2dc0d1b1f164554be9435c14f996cc279ac67be0cd2d5f16d8b12c0102'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
-    'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
+    '3b521098392097553a949fc5bbb8c420ad9eb0888a447533aa494a1949646a4e'
 )
 sha256sums_arm64=(
     'SKIP'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
-    'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
+    '3b521098392097553a949fc5bbb8c420ad9eb0888a447533aa494a1949646a4e'
 )
 
 
@@ -143,8 +143,8 @@ package() {
   # Install Python API script
   install -Dm755 "get_python_api.py" "${pkgdir}/usr/local/zed/get_python_api.py"
 
-  # Install Python API script
-  install -Dm755 "${srcdir}/zed_download_ai_models" "${pkgdir}/usr/local/bin/zed_download_ai_models"
+  # Install AI optimizer script
+  install -Dm755 "${srcdir}/zed_ai_optimizer" "${pkgdir}/usr/local/bin/zed_ai_optimizer"
 
   # Install tools
   cp -a -t "${pkgdir}/usr/local/zed" tools
