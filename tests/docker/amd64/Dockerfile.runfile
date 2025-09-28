@@ -1,0 +1,45 @@
+# ZED SDK AMD64 Test Image - Official Runfile Installation
+# This image installs ZED SDK using the official .run file for comparison testing
+
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set working directory
+WORKDIR /opt/zed-test
+
+# Copy shared scripts
+COPY common/base-deps.sh /opt/zed-test/
+COPY common/compare-install.sh /opt/zed-test/
+COPY amd64/install-runfile.sh /opt/zed-test/
+
+# Make scripts executable
+RUN chmod +x /opt/zed-test/*.sh
+
+# Install base dependencies
+RUN /opt/zed-test/base-deps.sh
+
+# Install ZED SDK using official runfile
+RUN /opt/zed-test/install-runfile.sh
+
+# Set up environment
+ENV PATH="/usr/local/zed/tools:/usr/local/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/local/zed/lib:${LD_LIBRARY_PATH}"
+
+# Create a marker file to identify installation method
+RUN echo "runfile-amd64" > /tmp/zed_docker_variant.txt
+
+# Add a user for testing (optional)
+RUN useradd -m -s /bin/bash zedtest && \
+    usermod -a -G video,zed zedtest
+
+# Default command runs the comparison script
+CMD ["/opt/zed-test/compare-install.sh"]
+
+# Metadata
+LABEL maintainer="Hsiang-Jui Lin <jerry73204@gmail.com>"
+LABEL description="ZED SDK AMD64 test container using official runfile installation"
+LABEL version="5.0.5"
+LABEL architecture="amd64"
+LABEL install_method="runfile"

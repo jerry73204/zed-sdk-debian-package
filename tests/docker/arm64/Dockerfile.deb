@@ -1,0 +1,61 @@
+# ZED SDK ARM64 Test Image - Debian Package Installation
+# This image installs ZED SDK using our custom .deb package for comparison testing
+
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set working directory
+WORKDIR /opt/zed-test
+
+# Copy shared scripts
+COPY common/base-deps.sh /opt/zed-test/
+COPY common/compare-install.sh /opt/zed-test/
+
+# Copy the built .deb package from the arm64 build directory
+# Note: This assumes the .deb package has been built before Docker build
+COPY ../arm64/zed-sdk_5.0.5-1_arm64.deb /opt/zed-test/
+
+# Make scripts executable
+RUN chmod +x /opt/zed-test/*.sh
+
+# Install base dependencies (this includes makedeb dependencies but not makedeb itself)
+RUN /opt/zed-test/base-deps.sh
+
+# Install our ZED SDK .deb package
+RUN echo "Installing ZED SDK .deb package for ARM64..." && \
+    dpkg -i /opt/zed-test/zed-sdk_5.0.5-1_arm64.deb || true && \
+    apt-get update && \
+    apt-get install -f -y && \
+    echo "ZED SDK .deb package installation completed"
+
+# Verify installation
+RUN echo "Verifying .deb installation..." && \
+    dpkg -l | grep zed-sdk && \
+    ls -la /usr/local/zed/ && \
+    echo "deb" > /tmp/zed_install_method.txt
+
+# Set up environment
+ENV PATH="/usr/local/zed/tools:/usr/local/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/usr/local/zed/lib:${LD_LIBRARY_PATH}"
+
+# Create a marker file to identify installation method
+RUN echo "deb-arm64" > /tmp/zed_docker_variant.txt
+
+# Add a user for testing (optional)
+RUN useradd -m -s /bin/bash zedtest && \
+    usermod -a -G video,zed zedtest
+
+# Clean up package file to reduce image size
+RUN rm -f /opt/zed-test/zed-sdk_5.0.5-1_arm64.deb
+
+# Default command runs the comparison script
+CMD ["/opt/zed-test/compare-install.sh"]
+
+# Metadata
+LABEL maintainer="Hsiang-Jui Lin <jerry73204@gmail.com>"
+LABEL description="ZED SDK ARM64 test container using custom .deb package installation"
+LABEL version="5.0.5"
+LABEL architecture="arm64"
+LABEL install_method="deb"
