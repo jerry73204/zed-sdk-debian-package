@@ -60,8 +60,8 @@ whl_file="pyzed-${pkgver}-cp310-cp310-linux_aarch64.whl"
 source=(
     "${run_file}::https://download.stereolabs.com/zedsdk/${pkgver}/l4t36.3/jetsons"
     "${whl_file}::https://download.stereolabs.com/zedsdk/${pkgver}/whl/linux_aarch64/pyzed-${pkgver}-cp310-cp310-linux_aarch64.whl"
-    "../shared/python_shebang.patch"
-    "../shared/zed_download_ai_models"
+    "python_shebang.patch"
+    "zed_download_ai_models"
 )
 
 noextract=(

@@ -56,8 +56,8 @@ whl_file="pyzed-${pkgver}-cp310-cp310-linux_x86_64.whl"
 source=(
     "${run_file}::https://download.stereolabs.com/zedsdk/${pkgver}/cu12/ubuntu22"
     "${whl_file}::https://stereolabs.sfo2.digitaloceanspaces.com/zedsdk/${pkgver}/whl/linux_x86_64/pyzed-${pkgver}-cp310-cp310-linux_x86_64.whl"
-    "../shared/python_shebang.patch"
-    "../shared/zed_download_ai_models"
+    "python_shebang.patch"
+    "zed_download_ai_models"
 )
 
 noextract=(
@@ -66,7 +66,7 @@ noextract=(
 
 sha256sums=(
     'c03f3e0a91512182a42a52e77d9b7ad76a044e3899b55b267c334cd6effe5844'
-    '13cd739ea3510bc15a1fcf3fc22fcd485df42c95453eaff0a9658b6cd1b5293a'
+    'bf9f4acfd3334cb40b7bc2a8eae6d3bfaace6eeaabcc9b5765256d83b66d404d'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
 )
