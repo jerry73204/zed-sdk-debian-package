@@ -31,23 +31,19 @@ depends=(
   # samples
   'libglew-dev'
   'freeglut3-dev'
-  # python
-  'python3-numpy'
-  'python3-requests'
-  'python3-pyqt5'
   # jetson-specific
   'nvidia-l4t-camera'
 )
 
 conflicts=('libv4l-dev')
 
+recommends=(
+  'python3-pyzed'
+)
+
 makedepends=(
   'zstd'
   'tar'
-  # python
-  'python3-dev'
-  'python3-pip'
-  'python3-setuptools'
 )
 options=('!strip')
 postinst='postinst.sh'
@@ -55,22 +51,15 @@ prerm='prerm.sh'
 postrm='postrm.sh'
 
 run_file="ZED_SDK_Tegra_L4T36.3_v${pkgver}.run"
-whl_file="pyzed-${pkgver}-cp310-cp310-linux_aarch64.whl"
 
 source=(
     "${run_file}::https://download.stereolabs.com/zedsdk/${pkgver}/l4t36.3/jetsons"
-    "${whl_file}::https://download.stereolabs.com/zedsdk/${pkgver}/whl/linux_aarch64/pyzed-${pkgver}-cp310-cp310-linux_aarch64.whl"
     "python_shebang.patch"
     "zed_download_ai_models"
 )
 
-noextract=(
-    "${whl_file}"
-)
-
 sha256sums=(
     '34ede11ba659a9b501f55ad262885cafb1c320cfc5cfba8da0407f7c6d84a2ed'
-    'c22dfbb15790928f5a1d7179b61317549c91edf1311aface4d12cb413f395e99'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
 )
@@ -93,7 +82,6 @@ package() {
 
   # Create target directories
   mkdir -p "${pkgdir}/usr/local/zed"
-  mkdir -p "${pkgdir}/usr/local/lib/python3.10/dist-packages"
   mkdir -p "${pkgdir}/etc/udev/rules.d"
   mkdir -p "${pkgdir}/etc/ld.so.conf.d"
   mkdir -p "${pkgdir}/usr/local/bin"
@@ -114,10 +102,7 @@ package() {
   install -Dm644 "zed-config.cmake" "${pkgdir}/usr/local/zed/zed-config.cmake"
   install -Dm644 "zed-config-version.cmake" "${pkgdir}/usr/local/zed/zed-config-version.cmake"
 
-  # Install Python API script
-  install -Dm755 "get_python_api.py" "${pkgdir}/usr/local/zed/get_python_api.py"
-
-  # Install Python API script
+  # Install AI models download script
   install -Dm755 "${srcdir}/zed_download_ai_models" "${pkgdir}/usr/local/bin/zed_download_ai_models"
 
   # Install tools
@@ -148,11 +133,6 @@ package() {
 
   # Create the doc directory
   cp -a -t "${pkgdir}/usr/local/zed" doc
-
-  # Install the wheel into the package directory
-  PYTHONUSERBASE="$pkgdir/usr" \
-		python3 -m pip install --no-deps --root="${pkgdir}" --prefix=/usr --ignore-installed \
-		"${srcdir}/${whl_file}"
 
   # Set base permissions for multi-user access
   # Note: Group ownership will be set to 'zed' in postinst.sh

@@ -1,0 +1,49 @@
+# Maintainer: Hsiang-Jui Lin <jerry73204@gmail.com>
+pkgname=python3-pyzed
+pkgver=4.2
+pkgrel=1
+pkgdesc="Python bindings for StereoLabs ZED SDK (Jetson)"
+arch=('arm64')
+url="https://www.stereolabs.com/developers/release/"
+license=('custom')
+
+depends=(
+  'zed-sdk'
+  'python3'
+  'python3-numpy'
+  'python3-requests'
+)
+
+makedepends=(
+  'python3-pip'
+  'python3-setuptools'
+)
+
+whl_file="pyzed-${pkgver}-cp310-cp310-linux_aarch64.whl"
+
+source=(
+    "${whl_file}::https://download.stereolabs.com/zedsdk/${pkgver}/whl/linux_aarch64/pyzed-${pkgver}-cp310-cp310-linux_aarch64.whl"
+)
+
+noextract=(
+    "${whl_file}"
+)
+
+sha256sums=(
+    'c22dfbb15790928f5a1d7179b61317549c91edf1311aface4d12cb413f395e99'
+)
+
+package() {
+  cd "${srcdir}"
+
+  # Install the Python wheel
+  PYTHONUSERBASE="$pkgdir/usr" \
+		python3 -m pip install --no-deps --root="${pkgdir}" --prefix=/usr --ignore-installed \
+		"${whl_file}"
+
+  # Install license (get from zed-sdk package or include separately)
+  # For now, we'll create a simple license file pointing to the main package
+  mkdir -p "${pkgdir}/usr/share/licenses/${pkgname}"
+  echo "This package shares the license with zed-sdk package." > "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  echo "See /usr/share/licenses/zed-sdk/LICENSE for full license text." >> "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

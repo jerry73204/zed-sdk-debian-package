@@ -17,21 +17,26 @@ The repository has been restructured to support separate builds for different ar
 ```
 makedeb-zed-sdk/
 ├── README.md                    # This file
-├── shared/                      # Shared files used by both architectures
+├── missing-features.md          # Feature analysis and roadmap
+├── shared/                      # Shared files
 │   ├── python_shebang.patch
 │   └── zed_download_ai_models
-├── x86_64/                      # x86_64/Desktop build
-│   ├── PKGBUILD
-│   ├── Makefile
-│   ├── postinst.sh
-│   ├── prerm.sh
-│   └── postrm.sh
-└── jetson/                      # Jetson/ARM64 build
-    ├── PKGBUILD
-    ├── Makefile
-    ├── postinst.sh
-    ├── prerm.sh
-    └── postrm.sh
+├── x86_64/                      # x86_64/Desktop builds
+│   ├── zed-sdk/                 # Main SDK package
+│   │   ├── PKGBUILD
+│   │   ├── Makefile
+│   │   └── {postinst,prerm,postrm}.sh
+│   └── python3-pyzed/           # Python bindings
+│       ├── PKGBUILD
+│       └── Makefile
+└── jetson/                      # Jetson/ARM64 builds
+    ├── zed-sdk/                 # Main SDK package
+    │   ├── PKGBUILD
+    │   ├── Makefile
+    │   └── {postinst,prerm,postrm}.sh
+    └── python3-pyzed/           # Python bindings
+        ├── PKGBUILD
+        └── Makefile
 ```
 
 ## Build the Debian Package
@@ -40,20 +45,30 @@ You need to install `makedeb` to build this package. Please visit [makedeb.org](
 
 ### For x86_64 (Desktop) Systems
 
+Build the main SDK:
 ```bash
-cd x86_64
+cd x86_64/zed-sdk
 make
-# or
-makedeb -s
+```
+
+Build Python bindings (optional):
+```bash
+cd x86_64/python3-pyzed
+make
 ```
 
 ### For Jetson (ARM64) Systems
 
+Build the main SDK:
 ```bash
-cd jetson
+cd jetson/zed-sdk
 make
-# or
-makedeb -s
+```
+
+Build Python bindings (optional):
+```bash
+cd jetson/python3-pyzed
+make
 ```
 
 ## Important Notes
