@@ -37,8 +37,8 @@ depends=(
 
 conflicts=('libv4l-dev')
 
-recommends=(
-  'python3-pyzed'
+optdepends=(
+  'r!python3-pyzed: Python bindings for ZED SDK'
 )
 
 makedepends=(
