@@ -31,6 +31,11 @@ depends=(
   # samples
   'libglew-dev'
   'freeglut3-dev'
+  # AI dependencies (from NVIDIA apt repository)
+  'libcudnn8>=8.9.7'
+  'libnvinfer8>=8.6.1'
+  'libnvinfer-plugin8>=8.6.1'
+  'libnvonnxparsers8>=8.6.1'
 )
 
 optdepends=(
@@ -93,6 +98,10 @@ package() {
   # Install firmware and resources
   cp -a -t "${pkgdir}/usr/local/zed" firmware
   # cp -a -t "${pkgdir}/usr/local/zed" resources
+
+  # Note: dependencies/ai_dependencies/ is NOT installed
+  # AI libraries (cuDNN, TensorRT) are provided by system packages (libcudnn8, libnvinfer8)
+  # ZED SDK uses dlopen() and will find them in /usr/lib/x86_64-linux-gnu/
 
   # Install cmake files
   install -Dm644 "zed-config.cmake" "${pkgdir}/usr/local/zed/zed-config.cmake"
