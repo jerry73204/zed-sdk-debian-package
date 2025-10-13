@@ -36,10 +36,25 @@ sha256sums=(
 package() {
   cd "${srcdir}"
 
-  # Install the Python wheel
-  PYTHONUSERBASE="$pkgdir/usr" \
-		python3 -m pip install --no-deps --root="${pkgdir}" --prefix=/usr --ignore-installed \
-		"${whl_file}"
+  # Install the Python wheel (pip will install to /usr/local/lib by default)
+  python3 -m pip install --no-deps --root="${pkgdir}" --prefix=/usr \
+		--ignore-installed --no-compile "${whl_file}"
+
+  # Move from /usr/local/lib to /usr/lib for Debian convention
+  # Debian/Ubuntu Python packages go in /usr/lib/python3/dist-packages
+  mkdir -p "${pkgdir}/usr/lib/python3/dist-packages"
+  if [ -d "${pkgdir}/usr/local/lib/python3.10/dist-packages/pyzed" ]; then
+    mv "${pkgdir}/usr/local/lib/python3.10/dist-packages/pyzed"* \
+       "${pkgdir}/usr/lib/python3/dist-packages/"
+    # Remove empty directories
+    rm -rf "${pkgdir}/usr/local"
+  fi
+
+  # Remove direct_url.json to avoid $srcdir reference warning
+  find "${pkgdir}" -name "direct_url.json" -delete
+
+  # Recompile Python cache files to remove $pkgdir references
+  python3 -m compileall -q -f -d /usr "${pkgdir}/usr/lib/python3/dist-packages/pyzed" || true
 
   # Install license (get from zed-sdk package or include separately)
   # For now, we'll create a simple license file pointing to the main package
