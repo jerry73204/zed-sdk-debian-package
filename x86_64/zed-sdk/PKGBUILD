@@ -58,12 +58,14 @@ source=(
     "${run_file}::https://stereolabs.sfo2.cdn.digitaloceanspaces.com/zedsdk/5.0/ZED_SDK_Ubuntu22_cuda12.1_tensorrt8.6_v${pkgver}.zstd.run"
     "python_shebang.patch"
     "zed_download_ai_models"
+    "zed.pc.in"
 )
 
 sha256sums=(
     '51790465ea257f6a47753ff2a751079588b52742615fad12ec6a04e8c5db3298'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
+    '27b5f82aefbc74078b745aeada6ba4f023e120478ef6161047f1ffc32f9b9bf5'
 )
 
 
@@ -129,6 +131,10 @@ package() {
   # Create ld.so.conf.d file (not bundled in archive, created by installer)
   mkdir -p "${pkgdir}/etc/ld.so.conf.d"
   echo "/usr/local/zed/lib" > "${pkgdir}/etc/ld.so.conf.d/zed.conf"
+
+  # Install pkg-config file for build system integration
+  mkdir -p "${pkgdir}/usr/lib/x86_64-linux-gnu/pkgconfig"
+  sed "s/@VERSION@/${pkgver}/g" "${srcdir}/zed.pc.in" > "${pkgdir}/usr/lib/x86_64-linux-gnu/pkgconfig/zed.pc"
 
   # Create the doc directory
   cp -a -t "${pkgdir}/usr/local/zed" doc
