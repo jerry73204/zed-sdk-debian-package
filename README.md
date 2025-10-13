@@ -17,31 +17,42 @@ The repository has been restructured to support separate builds for different ar
 ```
 makedeb-zed-sdk/
 ├── README.md                    # This file
-├── missing-features.md          # Feature analysis and roadmap
 ├── shared/                      # Shared files
-│   ├── python_shebang.patch
-│   └── zed_download_ai_models
 ├── x86_64/                      # x86_64/Desktop builds
 │   ├── zed-sdk/                 # Main SDK package
-│   │   ├── PKGBUILD
-│   │   ├── Makefile
-│   │   └── {postinst,prerm,postrm}.sh
 │   └── python3-pyzed/           # Python bindings
-│       ├── PKGBUILD
-│       └── Makefile
 └── jetson/                      # Jetson/ARM64 builds
     ├── zed-sdk/                 # Main SDK package
-    │   ├── PKGBUILD
-    │   ├── Makefile
-    │   └── {postinst,prerm,postrm}.sh
     └── python3-pyzed/           # Python bindings
-        ├── PKGBUILD
-        └── Makefile
 ```
+
+## Prerequisites
+
+### For x86_64 (Desktop) Systems
+
+- **Operating System:** Ubuntu 22.04
+- **CUDA:** Version 12.1 or higher
+- **NVIDIA AI Libraries:** cuDNN 8.9.7+, TensorRT 8.6.1+
+
+**Set up NVIDIA apt repository:**
+```bash
+# Add NVIDIA package repository
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt update
+
+# Install required AI libraries
+sudo apt install libcudnn8 libcudnn8-dev libnvinfer8 libnvinfer-plugin8 libnvonnxparsers8
+```
+
+### For Jetson (ARM64) Systems
+
+- **Operating System:** JetPack 6.0 / L4T 36.3
+- **Note:** AI libraries (cuDNN, TensorRT) are included in JetPack
 
 ## Build the Debian Package
 
-You need to install `makedeb` to build this package. Please visit [makedeb.org](https://www.makedeb.org/) to install this command.
+**For building packages from source**, you need to install `makedeb`. Please visit [makedeb.org](https://www.makedeb.org/) to install this command. See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed build instructions.
 
 ### For x86_64 (Desktop) Systems
 
@@ -71,28 +82,129 @@ cd jetson/python3-pyzed
 make
 ```
 
+## Installation
+
+After building the packages (or downloading pre-built packages from releases):
+
+### For x86_64 (Desktop) Systems
+
+```bash
+# Install the main SDK package
+sudo apt install ./zed-sdk_4.2-1_amd64.deb
+
+# Optionally install Python bindings
+sudo apt install ./python3-pyzed_4.2-1_amd64.deb
+```
+
+### For Jetson (ARM64) Systems
+
+```bash
+# Install the main SDK package
+sudo apt install ./zed-sdk_4.2-1_arm64.deb
+
+# Optionally install Python bindings
+sudo apt install ./python3-pyzed_4.2-1_arm64.deb
+```
+
+**Note:** The Python bindings package (`python3-pyzed`) is optional but recommended if you plan to use the ZED SDK with Python.
+
 ## Important Notes
 
 ### For x86_64/Desktop Users
 
-- CUDA 12.1+ is required for the SDK to function
-- AI features require proper CUDA installation
-- After installation, add your user to the video group: `sudo usermod -a -G video $(whoami)`
-- Log out and back in for group changes to take effect
-- Download AI models with: `zed_download_ai_models`
+1. **CUDA and AI Dependencies:**
+   - CUDA 12.1+ is required
+   - AI features require cuDNN and TensorRT from NVIDIA apt repository (see Prerequisites)
+   - This package uses system libraries instead of bundling them (~2.4GB saved)
+
+2. **User Groups and Permissions:**
+   - The installer automatically adds you to `zed` and `video` groups
+   - Multi-user support is enabled via the `zed` group
+   - **You must log out and log back in** for group membership to take effect
+
+3. **AI Models:**
+   - AI models are not included in the package
+   - Download and optimize models after installation: `sudo zed_download_ai_models`
+   - This process downloads models from StereoLabs servers and optimizes them for your system
 
 ### For Jetson Users
 
-1. **DO NOT** install the `libv4l-dev` package on Jetson devices as it will break hardware encoding/decoding support. This package is configured to conflict with `libv4l-dev`.
-2. The package automatically modifies the `nvargus-daemon.service` to enable infinite timeout for camera connections, improving stability with multiple cameras.
-3. The `zed_media_server_cli.service` is automatically configured and enabled on Jetson devices.
-4. L4T 36.3 is required for this package version.
-5. For ZED X camera support with GMSL, refer to the [official documentation](https://www.stereolabs.com/docs/get-started-with-zed-x/).
+1. **System Requirements:**
+   - **JetPack 6.0 / L4T 36.3 is required** for this package version
+   - AI libraries (cuDNN, TensorRT) are included in JetPack
 
-## Development and Contributing
+2. **libv4l-dev Conflict:**
+   - **DO NOT** install the `libv4l-dev` package on Jetson devices
+   - It will break hardware encoding/decoding support
+   - This package is configured to conflict with `libv4l-dev` to prevent accidental installation
 
-See [missing-features.md](missing-features.md) for:
-- Detailed analysis of missing features from the official installer
-- Implementation roadmap organized in phases
-- Testing checklists
-- Architecture-specific considerations
+3. **Automatic Configuration:**
+   - The installer modifies `nvargus-daemon.service` to enable infinite timeout for camera connections
+   - Improves stability with multiple cameras
+   - The `zed_media_server_cli.service` is automatically enabled and started
+   - User groups (`zed` and `video`) are configured automatically
+
+4. **ZED X Camera Support:**
+   - GMSL drivers are installed if present in the SDK package
+   - For specific hardware configurations, you may need additional driver packages
+   - See [official ZED X documentation](https://www.stereolabs.com/docs/get-started-with-zed-x/) for details
+
+5. **AI Models:**
+   - Download and optimize models after installation: `sudo zed_download_ai_models`
+   - **You must log out and log back in** for group membership to take effect
+
+## Post-Installation
+
+After installing the package, follow these steps:
+
+### 1. Apply Group Membership
+
+**Log out and log back in** (or reboot) for the `zed` and `video` group membership to take effect.
+
+Verify your group membership:
+```bash
+groups
+# Should show: ... zed video ...
+```
+
+### 2. Download AI Models (Optional but Recommended)
+
+If you plan to use AI features (object detection, body tracking, neural depth):
+
+```bash
+sudo zed_download_ai_models
+```
+
+This will:
+- Download all available AI models from StereoLabs servers
+- Optimize them for your specific hardware
+- May take significant time depending on your system
+
+### 3. Verify Installation
+
+Test that the SDK is working:
+
+```bash
+# Check ZED SDK version
+ZED_Diagnostic
+
+# List available ZED tools
+ls /usr/local/zed/tools/
+
+# Test with a ZED camera (if connected)
+ZED_Explorer
+```
+
+### 4. Test Python Bindings (if installed)
+
+```bash
+python3 -c "import pyzed.sl as sl; print(f'ZED SDK {sl.Camera.get_sdk_version()}')"
+```
+
+## Contributing
+
+Interested in building from source or contributing to this project? See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- How to build packages from source
+- Package architecture and design decisions
+- Key differences from the official installer
+- Testing guidelines
