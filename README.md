@@ -34,6 +34,12 @@ makedeb-zed-sdk/
 - **CUDA:** Version 12.1 or higher
 - **NVIDIA AI Libraries:** cuDNN 8.9.7+, TensorRT 8.6.1+
 
+**Note:** ZED SDK 5.0 is available in two versions:
+- **TensorRT 8.6** (default, broader GPU compatibility including Pascal GTX 10X0)
+- **TensorRT 10.9** (newer, drops Pascal support)
+
+This package uses the TensorRT 8.6 version for maximum compatibility.
+
 **Set up NVIDIA apt repository:**
 ```bash
 # Add NVIDIA package repository
@@ -41,7 +47,7 @@ wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/
 sudo dpkg -i cuda-keyring_1.1-1_all.deb
 sudo apt update
 
-# Install required AI libraries
+# Install required AI libraries (TensorRT 8.6 version)
 sudo apt install libcudnn8 libcudnn8-dev libnvinfer8 libnvinfer-plugin8 libnvonnxparsers8
 ```
 
@@ -90,20 +96,20 @@ After building the packages (or downloading pre-built packages from releases):
 
 ```bash
 # Install the main SDK package
-sudo apt install ./zed-sdk_4.2-1_amd64.deb
+sudo apt install ./zed-sdk_5.0.7-1_amd64.deb
 
 # Optionally install Python bindings
-sudo apt install ./python3-pyzed_4.2-1_amd64.deb
+sudo apt install ./python3-pyzed_5.0.7-1_amd64.deb
 ```
 
 ### For Jetson (ARM64) Systems
 
 ```bash
 # Install the main SDK package
-sudo apt install ./zed-sdk_4.2-1_arm64.deb
+sudo apt install ./zed-sdk_5.0.7-1_arm64.deb
 
 # Optionally install Python bindings
-sudo apt install ./python3-pyzed_4.2-1_arm64.deb
+sudo apt install ./python3-pyzed_5.0.7-1_arm64.deb
 ```
 
 **Note:** The Python bindings package (`python3-pyzed`) is optional but recommended if you plan to use the ZED SDK with Python.

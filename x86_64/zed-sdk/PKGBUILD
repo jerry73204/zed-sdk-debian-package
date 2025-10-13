@@ -1,6 +1,6 @@
 # Maintainer: Hsiang-Jui Lin <jerry73204@gmail.com>
 pkgname=zed-sdk
-pkgver=4.2
+pkgver=5.0.7
 pkgrel=1
 pkgdesc="StereoLabs ZED SDK for x86_64 (Desktop)"
 arch=('amd64')
@@ -32,6 +32,7 @@ depends=(
   'libglew-dev'
   'freeglut3-dev'
   # AI dependencies (from NVIDIA apt repository)
+  # ZED SDK 5.0 with TensorRT 8.6 and CUDA 12.1 (broader GPU compatibility)
   'libcudnn8>=8.9.7'
   'libnvinfer8>=8.6.1'
   'libnvinfer-plugin8>=8.6.1'
@@ -51,16 +52,16 @@ postinst='postinst.sh'
 prerm='prerm.sh'
 postrm='postrm.sh'
 
-run_file="ZED_SDK_Ubuntu22_cuda12_v${pkgver}.run"
+run_file="ZED_SDK_Ubuntu22_cuda12.1_tensorrt8.6_v${pkgver}.zstd.run"
 
 source=(
-    "${run_file}::https://download.stereolabs.com/zedsdk/${pkgver}/cu12/ubuntu22"
+    "${run_file}::https://stereolabs.sfo2.cdn.digitaloceanspaces.com/zedsdk/5.0/ZED_SDK_Ubuntu22_cuda12.1_tensorrt8.6_v${pkgver}.zstd.run"
     "python_shebang.patch"
     "zed_download_ai_models"
 )
 
 sha256sums=(
-    'c03f3e0a91512182a42a52e77d9b7ad76a044e3899b55b267c334cd6effe5844'
+    '51790465ea257f6a47753ff2a751079588b52742615fad12ec6a04e8c5db3298'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
 )
@@ -100,8 +101,8 @@ package() {
   # cp -a -t "${pkgdir}/usr/local/zed" resources
 
   # Note: dependencies/ai_dependencies/ is NOT installed
-  # AI libraries (cuDNN, TensorRT) are provided by system packages (libcudnn8, libnvinfer8)
-  # ZED SDK uses dlopen() and will find them in /usr/lib/x86_64-linux-gnu/
+  # AI libraries (cuDNN 8.9.7, TensorRT 8.6.1) are provided by system packages
+  # ZED SDK 5.0 uses dlopen() and will find them in /usr/lib/x86_64-linux-gnu/
 
   # Install cmake files
   install -Dm644 "zed-config.cmake" "${pkgdir}/usr/local/zed/zed-config.cmake"
@@ -125,8 +126,9 @@ package() {
   # Install udev rules
   install -Dm644 "99-slabs.rules" "${pkgdir}/etc/udev/rules.d/99-slabs.rules"
 
-  # Install ld.so.conf.d file
-  install -Dm644 "zed.conf" "${pkgdir}/etc/ld.so.conf.d/zed.conf"
+  # Create ld.so.conf.d file (not bundled in archive, created by installer)
+  mkdir -p "${pkgdir}/etc/ld.so.conf.d"
+  echo "/usr/local/zed/lib" > "${pkgdir}/etc/ld.so.conf.d/zed.conf"
 
   # Create the doc directory
   cp -a -t "${pkgdir}/usr/local/zed" doc
