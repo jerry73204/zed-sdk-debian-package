@@ -50,14 +50,6 @@ if command -v systemctl >/dev/null && systemctl list-units >/dev/null 2>&1; then
     echo "Enabled and started zed_media_server_cli.service"
 fi
 
-# Create v4l2 symlink if it doesn't exist
-if [ ! -f "/usr/lib/aarch64-linux-gnu/libv4l2.so" ]; then
-    if [ -f "/usr/lib/aarch64-linux-gnu/libv4l2.so.0" ]; then
-        ln -s /usr/lib/aarch64-linux-gnu/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
-        echo "Created libv4l2.so symlink"
-    fi
-fi
-
 echo ''
 echo 'ZED SDK installation complete.'
 echo ''
