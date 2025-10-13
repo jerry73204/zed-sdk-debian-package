@@ -56,12 +56,14 @@ source=(
     "${run_file}::https://download.stereolabs.com/zedsdk/${pkgver}/l4t36.3/jetsons"
     "python_shebang.patch"
     "zed_download_ai_models"
+    "zed.pc.in"
 )
 
 sha256sums=(
     '34ede11ba659a9b501f55ad262885cafb1c320cfc5cfba8da0407f7c6d84a2ed'
     '1eed77b1cb24af3e58ecffde7a6bd1524215efeb9bafdc9364a2add2bc911fcd'
     'f4bff6ceb6de242615ddb2c305d70b35f7935adee4bbdda1d5d980a960efa09b'
+    '27b5f82aefbc74078b745aeada6ba4f023e120478ef6161047f1ffc32f9b9bf5'
 )
 
 
@@ -120,8 +122,13 @@ package() {
   # Install udev rules
   install -Dm644 "99-slabs.rules" "${pkgdir}/etc/udev/rules.d/99-slabs.rules"
 
-  # Install ld.so.conf.d file
-  install -Dm644 "zed.conf" "${pkgdir}/etc/ld.so.conf.d/zed.conf"
+  # Create ld.so.conf.d file (not bundled in archive, created by installer)
+  mkdir -p "${pkgdir}/etc/ld.so.conf.d"
+  echo "/usr/local/zed/lib" > "${pkgdir}/etc/ld.so.conf.d/zed.conf"
+
+  # Install pkg-config file for build system integration
+  mkdir -p "${pkgdir}/usr/lib/aarch64-linux-gnu/pkgconfig"
+  sed "s/@VERSION@/${pkgver}/g" "${srcdir}/zed.pc.in" > "${pkgdir}/usr/lib/aarch64-linux-gnu/pkgconfig/zed.pc"
 
   # Install ZEDMediaServer service (Jetson only)
   install -Dm644 "zed_media_server_cli.service" "${pkgdir}/etc/systemd/system/zed_media_server_cli.service"
