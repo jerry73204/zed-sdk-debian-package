@@ -1,20 +1,55 @@
 # Build artifacts
-/*.deb
-/*.tar.gz
-/*.tar.xz
-/*.tar.zst
-/*.run
-/*.whl
-/pkg/
-/src/
+*.deb
+*.log
+src/
+pkg/
+
+# Downloaded files
+*.run
+*.whl
+*.tar.gz
+*.tar.xz
+*.tar.zst
+
+# Platform build directories
+*/src/
+*/pkg/
+*/*.deb
+*/*.log
+*/*.run
+*/*.whl
+
+# Archive directory (old unified build)
+archive/
 
 # makedeb artifacts
 makedeb-pkg/
 pkgbuild-stamp
 
-# Personal files
-*~
-.*~
+# Editor and OS files
+.vscode/
+.idea/
 *.swp
 *.swo
+*~
+.*~
 \#*#
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+tmp/
+temp/
+*.tmp
