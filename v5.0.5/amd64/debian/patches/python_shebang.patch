@@ -1,0 +1,14 @@
+Description: Add shebang to get_python_api.py
+ The get_python_api.py script is missing a shebang line.
+ This patch adds #!/usr/bin/env python3 to make it directly executable.
+Author: Hsiang-Jui Lin <jerry73204@gmail.com>
+Forwarded: not-needed
+Last-Update: 2024-12-25
+
+--- a/get_python_api.py
++++ b/get_python_api.py
+@@ -1,3 +1,4 @@
++#!/usr/bin/env python3
+ import os
+ import platform
+ import sys

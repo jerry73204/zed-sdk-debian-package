@@ -1,0 +1,105 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export DEB_BUILD_OPTIONS = nostrip
+
+PKG_NAME := $(shell dpkg-parsechangelog -S Source)
+PKG_VERSION := $(shell dpkg-parsechangelog -S Version | cut -d- -f1)
+VER_MAJOR_MINOR := $(shell echo $(PKG_VERSION) | cut -d. -f1-2)
+
+# AMD64-specific file names
+RUN_FILE := ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v$(PKG_VERSION).zstd.run
+WHL_FILE := pyzed-$(VER_MAJOR_MINOR)-cp310-cp310-linux_x86_64.whl
+
+%:
+	dh $@ --with python3
+
+override_dh_auto_clean:
+	rm -rf extract/
+	rm -f 001-zed.conf
+
+# Extract .run file (replaces PKGBUILD prepare())
+override_dh_auto_configure:
+	# Download Python wheel if not present
+	if [ ! -f "$(WHL_FILE)" ]; then \
+		echo "Downloading Python wheel..."; \
+		wget -O "$(WHL_FILE)" \
+			"https://download.stereolabs.com/zedsdk/$(VER_MAJOR_MINOR)/whl/linux_x86_64/$(WHL_FILE)"; \
+	fi
+
+	# Extract SDK from self-extracting archive
+	@echo "Extracting SDK from .run file..."
+	mkdir -p extract
+	tail -n +718 "$(RUN_FILE)" | zstdcat -d | tar -xf - -C extract
+
+# Build step (minimal - pre-built binary)
+override_dh_auto_build:
+	# SDK is pre-compiled, nothing to build
+
+# Installation (replaces PKGBUILD package())
+override_dh_auto_install:
+	# Create target directories
+	mkdir -p debian/$(PKG_NAME)/opt/zed/settings
+	mkdir -p debian/$(PKG_NAME)/etc/udev/rules.d
+	mkdir -p debian/$(PKG_NAME)/etc/ld.so.conf.d
+	mkdir -p debian/$(PKG_NAME)/usr/bin
+	mkdir -p debian/$(PKG_NAME)/usr/share/licenses/$(PKG_NAME)
+
+	# Install SDK components
+	cp -a extract/lib debian/$(PKG_NAME)/opt/zed/
+	cp -a extract/include debian/$(PKG_NAME)/opt/zed/
+	cp -a extract/firmware debian/$(PKG_NAME)/opt/zed/
+	cp -a extract/tools debian/$(PKG_NAME)/opt/zed/
+	cp -a extract/samples debian/$(PKG_NAME)/opt/zed/
+	cp -a extract/doc debian/$(PKG_NAME)/opt/zed/
+
+	# Install license
+	if [ -f extract/doc/license/LICENSE.txt ]; then \
+		install -Dm644 extract/doc/license/LICENSE.txt \
+			debian/$(PKG_NAME)/usr/share/licenses/$(PKG_NAME)/LICENSE; \
+	fi
+
+	# Install CMake files
+	install -Dm644 extract/zed-config.cmake \
+		debian/$(PKG_NAME)/opt/zed/zed-config.cmake
+	install -Dm644 extract/zed-config-version.cmake \
+		debian/$(PKG_NAME)/opt/zed/zed-config-version.cmake
+
+	# Install Python API script
+	if [ -f extract/get_python_api.py ]; then \
+		install -Dm755 extract/get_python_api.py \
+			debian/$(PKG_NAME)/opt/zed/get_python_api.py; \
+	fi
+
+	# Install AI optimizer
+	install -Dm755 debian/helpers/zed_ai_optimizer \
+		debian/$(PKG_NAME)/usr/bin/zed_ai_optimizer
+
+	# Create symlinks for tools
+	find debian/$(PKG_NAME)/opt/zed/tools/ -type f -executable | while read tool_exe; do \
+		name=$$(basename $$tool_exe); \
+		ln -s /opt/zed/tools/$$name debian/$(PKG_NAME)/usr/bin/$$name; \
+	done
+
+	# Install udev rules
+	install -Dm644 extract/99-slabs.rules \
+		debian/$(PKG_NAME)/etc/udev/rules.d/99-slabs.rules
+
+	# Create ld.so.conf.d file
+	echo "/opt/zed/lib" > 001-zed.conf
+	install -Dm644 001-zed.conf \
+		debian/$(PKG_NAME)/etc/ld.so.conf.d/001-zed.conf
+
+	# Install Python wheel
+	python3 -m pip install --no-deps --root=debian/$(PKG_NAME) \
+		--prefix=/usr --ignore-installed $(WHL_FILE)
+
+override_dh_strip:
+	# Skip stripping to preserve debug symbols
+	dh_strip --exclude=.so
+
+override_dh_shlibdeps:
+	# Ignore missing info for CUDA/TensorRT libs (not in Debian repos)
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+
+.PHONY: override_dh_auto_clean override_dh_auto_configure override_dh_auto_build override_dh_auto_install override_dh_strip override_dh_shlibdeps

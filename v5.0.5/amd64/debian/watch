@@ -1,0 +1,6 @@
+version=4
+
+opts="downloadurlmangle=s|.*/(.*)|\1|, \
+      filenamemangle=s|.*|ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v@VERSION@.zstd.run|" \
+https://download.stereolabs.com/zedsdk/(\d[\d.]+)/cu12/ubuntu22 \
+debian uupdate

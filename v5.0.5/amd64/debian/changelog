@@ -1,0 +1,8 @@
+zed-sdk (5.0.5-1) jammy; urgency=medium
+
+  * Initial debhelper-based packaging
+  * Migrate from makedeb PKGBUILD to standard Debian packaging
+  * Consolidate SDK and Python bindings into single package
+  * Include CUDA 12.8 and TensorRT 10.9 support
+
+ -- Hsiang-Jui Lin <jerry73204@gmail.com>  Wed, 25 Dec 2024 16:00:00 +0000
