@@ -1,0 +1,13 @@
+# Build artifacts
+*.deb
+*.tar.gz
+*.tar.xz
+*.tar.zst
+*.run
+*.whl
+/pkg/
+/src/
+
+# makedeb artifacts
+makedeb-pkg/
+pkgbuild-stamp

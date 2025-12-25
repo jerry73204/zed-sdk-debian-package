@@ -1,10 +1,71 @@
-# Personal files
-*~
-.*~
-*.swp
-*.swo
-\#*#
+# Build artifacts
+*.deb
+*.log
+src/
+pkg/
 
-# Editor directories
+# Downloaded files
+*.run
+*.whl
+*.tar.gz
+*.tar.xz
+*.tar.zst
+
+# Version directory build artifacts
+v*/*/src/
+v*/*/pkg/
+v*/*/*.deb
+v*/*/*.log
+v*/*/*.run
+v*/*/*.whl
+
+# Nested architecture directories (v4.2, v5.0)
+v*/*/zed-sdk/src/
+v*/*/zed-sdk/pkg/
+v*/*/zed-sdk/*.deb
+v*/*/zed-sdk/*.log
+v*/*/python3-pyzed/src/
+v*/*/python3-pyzed/pkg/
+v*/*/python3-pyzed/*.deb
+v*/*/python3-pyzed/*.log
+
+# Test results (v5.0.5)
+v*/tests/results/
+v*/tests/reports/
+!v*/tests/results/.gitkeep
+!v*/tests/reports/.gitkeep
+
+# Archive directory
+archive/
+
+# makedeb artifacts
+makedeb-pkg/
+pkgbuild-stamp
+
+# Editor and OS files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.*~
+\#*#
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+tmp/
+temp/
+*.tmp

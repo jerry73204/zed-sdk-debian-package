@@ -1,0 +1,10 @@
+# Personal files
+*~
+.*~
+*.swp
+*.swo
+\#*#
+
+# Editor directories
+.vscode/
+.idea/
