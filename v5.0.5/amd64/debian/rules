@@ -59,11 +59,16 @@ override_dh_auto_install:
 			debian/$(PKG_NAME)/usr/share/licenses/$(PKG_NAME)/LICENSE; \
 	fi
 
-	# Install CMake files
-	install -Dm644 extract/zed-config.cmake \
+	# Install CMake files (edit path to /opt/zed)
+	sed 's|/usr/local/zed|/opt/zed|g' extract/zed-config.cmake > \
 		debian/$(PKG_NAME)/opt/zed/zed-config.cmake
 	install -Dm644 extract/zed-config-version.cmake \
 		debian/$(PKG_NAME)/opt/zed/zed-config-version.cmake
+
+	# Install pkg-config file
+	mkdir -p debian/$(PKG_NAME)/usr/lib/x86_64-linux-gnu/pkgconfig
+	sed "s/@VERSION@/$(PKG_VERSION)/g" debian/zed.pc.in > \
+		debian/$(PKG_NAME)/usr/lib/x86_64-linux-gnu/pkgconfig/zed.pc
 
 	# Install Python API script
 	if [ -f extract/get_python_api.py ]; then \
@@ -93,6 +98,11 @@ override_dh_auto_install:
 	# Install Python wheel
 	python3 -m pip install --no-deps --root=debian/$(PKG_NAME) \
 		--prefix=/usr --ignore-installed $(WHL_FILE)
+
+	# Set proper permissions for ZED SDK directory
+	chmod -R 755 debian/$(PKG_NAME)/opt/zed
+	# Make settings directory group-writable for multi-user access
+	chmod 775 debian/$(PKG_NAME)/opt/zed/settings
 
 override_dh_strip:
 	# Skip stripping to preserve debug symbols

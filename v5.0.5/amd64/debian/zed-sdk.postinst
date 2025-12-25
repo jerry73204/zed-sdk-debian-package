@@ -12,7 +12,12 @@ fi
 # Set group ownership on ZED SDK directory
 if [ -d "/opt/zed" ]; then
     chgrp -R zed /opt/zed
-    chmod g+rX /opt/zed
+    # Add read+execute for group on all files/dirs
+    chmod -R g+rX /opt/zed
+    # Make settings directory group-writable for configuration storage
+    if [ -d "/opt/zed/settings" ]; then
+        chmod g+w /opt/zed/settings
+    fi
 fi
 
 # Run ldconfig to update the library cache
