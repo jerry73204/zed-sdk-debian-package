@@ -1,0 +1,10 @@
+#!/bin/sh
+# prerm script for zed-sdk-4.2
+# This script runs BEFORE the package files are removed
+
+set -e
+
+# Nothing specific to do before removal
+# Service stopping, etc. would go here
+
+exit 0

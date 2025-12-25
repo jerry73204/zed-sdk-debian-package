@@ -1,0 +1,32 @@
+# Extracted SDK files
+extract/
+
+# Downloaded files
+*.run
+*.whl
+
+# Build artifacts
+debian/.debhelper/
+debian/zed-sdk/
+debian/zed-sdk-*/
+debian/tmp/
+debian/files
+debian/debhelper-build-stamp
+debian/*.substvars
+debian/*.debhelper
+debian/*.debhelper.log
+debian/zed-sdk-*.postinst.debhelper
+debian/zed-sdk-*.prerm.debhelper
+debian/zed-sdk-*.substvars
+
+# Generated config files
+001-zed*.conf
+
+# Build outputs (in parent directory)
+../*.deb
+../*.buildinfo
+../*.changes
+
+# Temporary files
+*.log
+*~

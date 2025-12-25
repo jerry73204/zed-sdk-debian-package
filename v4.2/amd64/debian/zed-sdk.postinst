@@ -1,0 +1,44 @@
+#!/bin/sh
+# postinst script for zed-sdk (AMD64)
+
+set -e
+
+# Create zed group if it doesn't exist
+if ! getent group zed > /dev/null 2>&1; then
+    echo "Creating 'zed' group..."
+    groupadd zed
+fi
+
+# Set group ownership on ZED SDK directory
+if [ -d "/opt/zed-4.2" ]; then
+    chgrp -R zed /opt/zed-4.2
+    # Add read+execute for group on all files/dirs
+    chmod -R g+rX /opt/zed-4.2
+    # Make settings directory group-writable for configuration storage
+    if [ -d "/opt/zed-4.2/settings" ]; then
+        chmod g+w /opt/zed-4.2/settings
+    fi
+fi
+
+# Run ldconfig to update the library cache
+ldconfig
+
+# Trigger udev rules
+udevadm control --reload-rules && udevadm trigger
+
+echo '════════════════════════════════════════════════════════════════════'
+echo '                 ZED SDK Installation Complete!'
+echo '════════════════════════════════════════════════════════════════════'
+echo ''
+echo '► To use the SDK, add your user to the video group:'
+echo '  sudo usermod -a -G video $(whoami)'
+echo '  (then log out and back in)'
+echo ''
+echo '► To enable AI features (object detection, body tracking, etc.):'
+echo '  zed_download_ai_models-4.2'
+echo ''
+echo '  This will download AI models for your GPU.'
+echo ''
+echo '════════════════════════════════════════════════════════════════════'
+
+exit 0
