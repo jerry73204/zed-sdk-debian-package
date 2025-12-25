@@ -1,0 +1,7 @@
+zed-sdk (5.1.2-1) jammy; urgency=medium
+
+  * Initial debhelper-based packaging for ZED SDK 5.1.2
+  * Migrate from makedeb PKGBUILD to standard Debian packaging
+  * Consolidate SDK and Python bindings into single package
+
+ -- Hsiang-Jui Lin <jerry73204@gmail.com>  Wed, 25 Dec 2024 22:00:00 +0000
