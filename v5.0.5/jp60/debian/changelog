@@ -1,0 +1,8 @@
+zed-sdk-jetpack (5.0.5-1) jammy; urgency=medium
+
+  * Initial Debian package for ZED SDK 5.0.5
+  * Target: NVIDIA Jetson (L4T 36.4 / JetPack 6.0)
+  * Includes consolidated SDK and Python bindings
+  * Features: NPU/DLA optimization, ZED Media Server
+
+ -- Hsiang-Jui Lin <jerry73204@gmail.com>  Tue, 29 Oct 2024 00:00:00 +0000
