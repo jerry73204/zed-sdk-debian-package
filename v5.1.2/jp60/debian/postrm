@@ -1,0 +1,79 @@
+#!/bin/sh
+# postrm script for zed-sdk-jetpack
+# This script runs AFTER the package files are removed
+
+set -e
+
+case "$1" in
+    purge)
+        # Complete removal - clean up everything
+
+        # Remove configuration and settings directories
+        echo "Removing ZED SDK configuration files..."
+        rm -rf /usr/local/zed/settings 2>/dev/null || true
+        rm -rf /usr/local/zed/resources 2>/dev/null || true
+
+        # Remove AI models (they're large and user-specific)
+        if [ -d "/usr/local/zed/resources" ]; then
+            echo "Removing downloaded AI models..."
+            rm -rf /usr/local/zed/resources 2>/dev/null || true
+        fi
+
+        # Remove any remaining ZED SDK directory if empty
+        if [ -d "/usr/local/zed" ]; then
+            rmdir --ignore-fail-on-non-empty /usr/local/zed 2>/dev/null || true
+        fi
+
+        # Remove the zed group if it exists and has no members
+        if getent group zed > /dev/null; then
+            if [ -z "$(getent group zed | cut -d: -f4)" ]; then
+                echo "Removing zed group..."
+                groupdel zed || true
+            else
+                echo "Note: zed group has members, not removing"
+            fi
+        fi
+
+        # Clean up any remaining cache files
+        rm -rf /var/cache/zed 2>/dev/null || true
+        rm -rf /tmp/zed_* 2>/dev/null || true
+
+        # Remove systemd service remnants
+        rm -f /etc/systemd/system/zed_media_server_cli.service.d/* 2>/dev/null || true
+        rmdir --ignore-fail-on-non-empty /etc/systemd/system/zed_media_server_cli.service.d 2>/dev/null || true
+        ;;
+
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        # Standard removal - keep user data
+
+        # Update library cache after library removal
+        echo "Updating library cache..."
+        ldconfig
+
+        # Reload udev rules after device rules removal
+        if command -v udevadm >/dev/null; then
+            echo "Reloading udev rules..."
+            udevadm control --reload-rules || true
+            udevadm trigger || true
+        fi
+
+        # Reload systemd daemon to clear service definitions
+        if command -v systemctl >/dev/null && systemctl list-units >/dev/null 2>&1; then
+            systemctl daemon-reload || true
+        fi
+
+        # Clean up broken symlinks in /usr/local/bin
+        for link in /usr/local/bin/ZED_*; do
+            if [ -L "$link" ] && [ ! -e "$link" ]; then
+                rm -f "$link"
+            fi
+        done
+        ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
