@@ -12,12 +12,19 @@ IMAGE_NAME="zed-sdk-jp60-builder"
 IMAGE_TAG="5.1.2"
 OUTPUT_DIR="${PACKAGE_DIR}/output"
 
+# Get host user UID and GID
+HOST_UID=$(id -u)
+HOST_GID=$(id -g)
+HOST_USER=$(id -un)
+HOST_GROUP=$(id -gn)
+
 echo "=========================================="
 echo "ZED SDK JP60 Docker Build System"
 echo "=========================================="
 echo "Package directory: $PACKAGE_DIR"
 echo "Output directory: $OUTPUT_DIR"
 echo "Image: ${IMAGE_NAME}:${IMAGE_TAG}"
+echo "Host user: ${HOST_USER}:${HOST_GROUP} (${HOST_UID}:${HOST_GID})"
 echo "=========================================="
 
 # Create output directory
@@ -105,6 +112,8 @@ if [ "$INTERACTIVE" = true ]; then
 
     docker run --rm -it \
         --platform linux/arm64 \
+        --user "${HOST_UID}:${HOST_GID}" \
+        -e HOME=/tmp \
         -v "${PACKAGE_DIR}:/build/package" \
         -v "${OUTPUT_DIR}:/build/output" \
         -w /build/package \
@@ -121,6 +130,8 @@ echo ""
 
 docker run --rm \
     --platform linux/arm64 \
+    --user "${HOST_UID}:${HOST_GID}" \
+    -e HOME=/tmp \
     -v "${PACKAGE_DIR}:/build/package" \
     -v "${OUTPUT_DIR}:/build/output" \
     "${IMAGE_NAME}:${IMAGE_TAG}" \
