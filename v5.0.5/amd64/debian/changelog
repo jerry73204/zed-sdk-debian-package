@@ -1,8 +1,8 @@
 zed-sdk (5.0.5-1) jammy; urgency=medium
 
-  * Initial debhelper-based packaging
-  * Migrate from makedeb PKGBUILD to standard Debian packaging
-  * Consolidate SDK and Python bindings into single package
-  * Include CUDA 12.8 and TensorRT 10.9 support
+  * Initial debhelper package for ZED SDK 5.0.5
+  * Platform: AMD64 (Ubuntu 22.04, CUDA 12.8, TensorRT 10.9)
+  * Consolidated package with SDK and Python bindings
+  * Includes AI model optimizer for CUDA/TensorRT
 
- -- Hsiang-Jui Lin <jerry73204@gmail.com>  Wed, 25 Dec 2024 16:00:00 +0000
+ -- Hsiang-Jui Lin <jerry73204@gmail.com>  Thu, 26 Dec 2024 00:00:00 +0800

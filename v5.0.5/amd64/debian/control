@@ -1,22 +1,18 @@
 Source: zed-sdk
-Section: science
+Section: libs
 Priority: optional
 Maintainer: Hsiang-Jui Lin <jerry73204@gmail.com>
 Build-Depends: debhelper-compat (= 13),
                zstd,
-               tar,
                python3-dev,
                python3-pip,
-               python3-setuptools,
-               dh-python
-Standards-Version: 4.6.2
+               python3-setuptools
+Standards-Version: 4.6.0
 Homepage: https://www.stereolabs.com/developers/release/
-Rules-Requires-Root: no
 
 Package: zed-sdk
 Architecture: amd64
 Depends: ${shlibs:Depends},
-         ${python3:Depends},
          ${misc:Depends},
          libjpeg-turbo8,
          libturbojpeg,
@@ -42,16 +38,13 @@ Depends: ${shlibs:Depends},
          python3-requests,
          python3-pyqt5
 Description: StereoLabs ZED SDK for AMD64 systems
- The ZED SDK provides computer vision capabilities for StereoLabs
- ZED stereo cameras, including depth perception, spatial mapping,
- object detection, and body tracking.
+ The ZED SDK provides advanced computer vision and depth sensing capabilities
+ for StereoLabs ZED cameras on x86_64 desktop and server systems.
  .
  This package includes:
-  - Core SDK libraries (libsl_zed.so, libsl_ai.so)
-  - C++ headers and development files
-  - Python bindings (pyzed module)
-  - Sample applications and documentation
-  - Diagnostic tools
-  - AI model optimizer for GPU acceleration
+  - ZED SDK libraries and headers
+  - Python bindings (pyzed)
+  - Development tools and samples
+  - AI model optimizer for CUDA/TensorRT
  .
- Requires CUDA 12.8 and TensorRT 10.9 for full functionality.
+ Platform: AMD64 (Ubuntu 22.04, CUDA 12.8, TensorRT 10.9)

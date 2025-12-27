@@ -1,13 +1,14 @@
-# Extracted SDK files
+# Downloaded SDK files
+ZED_SDK_*.run
+pyzed-*.whl
+
+# Build directories
+build/
 extract/
-
-# Downloaded files
-*.run
-*.whl
-
-# Build artifacts
 debian/.debhelper/
 debian/zed-sdk/
+
+# Build artifacts
 debian/files
 debian/debhelper-build-stamp
 debian/*.substvars
@@ -21,6 +22,10 @@ debian/*.debhelper.log
 ../*.deb
 ../*.buildinfo
 ../*.changes
+
+# Output directory contents (keep the directory itself)
+output/*
+!output/.gitkeep
 
 # Temporary files
 *.log

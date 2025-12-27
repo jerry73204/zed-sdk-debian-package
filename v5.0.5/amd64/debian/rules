@@ -1,115 +1,113 @@
 #!/usr/bin/make -f
+# -*- makefile -*-
+
+# ZED SDK version
+ZED_VERSION = 5.0.5
+ZED_VERSION_MAJOR_MINOR = 5.0
+
+# Source files
+ZED_RUN_FILE = ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v$(ZED_VERSION).zstd.run
+PYZED_WHEEL = pyzed-$(ZED_VERSION_MAJOR_MINOR)-cp310-cp310-linux_x86_64.whl
+
+# Download URLs
+ZED_SDK_URL = https://download.stereolabs.com/zedsdk/5.0/cu12/ubuntu22
+PYZED_URL = https://download.stereolabs.com/zedsdk/$(ZED_VERSION_MAJOR_MINOR)/whl/linux_x86_64/$(PYZED_WHEEL)
+
+# Directories
+BUILD_DIR = $(CURDIR)/build
+EXTRACT_DIR = $(BUILD_DIR)/extract
+DEB_DESTDIR = $(CURDIR)/debian/zed-sdk
 
 export DH_VERBOSE = 1
 export DEB_BUILD_OPTIONS = nostrip
 
-PKG_NAME := $(shell dpkg-parsechangelog -S Source)
-PKG_VERSION := $(shell dpkg-parsechangelog -S Version | cut -d- -f1)
-VER_MAJOR_MINOR := $(shell echo $(PKG_VERSION) | cut -d. -f1-2)
-
-# AMD64-specific file names
-RUN_FILE := ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v$(PKG_VERSION).zstd.run
-WHL_FILE := pyzed-$(VER_MAJOR_MINOR)-cp310-cp310-linux_x86_64.whl
-
 %:
-	dh $@ --with python3
+	dh $@
 
 override_dh_auto_clean:
-	rm -rf extract/
-	rm -f 001-zed.conf
+	rm -rf $(BUILD_DIR)
+	rm -f $(ZED_RUN_FILE) $(PYZED_WHEEL)
+	dh_auto_clean
 
-# Extract .run file (replaces PKGBUILD prepare())
 override_dh_auto_configure:
-	# Download Python wheel if not present
-	if [ ! -f "$(WHL_FILE)" ]; then \
-		echo "Downloading Python wheel..."; \
-		wget -O "$(WHL_FILE)" \
-			"https://download.stereolabs.com/zedsdk/$(VER_MAJOR_MINOR)/whl/linux_x86_64/$(WHL_FILE)"; \
+	# Download SDK and Python wheel if not present
+	@echo "Downloading ZED SDK files..."
+	@if [ ! -f "$(ZED_RUN_FILE)" ]; then \
+		echo "Downloading $(ZED_RUN_FILE)..."; \
+		wget -O $(ZED_RUN_FILE) $(ZED_SDK_URL); \
+	else \
+		echo "$(ZED_RUN_FILE) already exists"; \
+	fi
+	@if [ ! -f "$(PYZED_WHEEL)" ]; then \
+		echo "Downloading $(PYZED_WHEEL)..."; \
+		wget -O $(PYZED_WHEEL) $(PYZED_URL); \
+	else \
+		echo "$(PYZED_WHEEL) already exists"; \
 	fi
 
-	# Extract SDK from self-extracting archive
-	@echo "Extracting SDK from .run file..."
-	mkdir -p extract
-	tail -n +718 "$(RUN_FILE)" | zstdcat -d | tar -xf - -C extract
-
-# Build step (minimal - pre-built binary)
 override_dh_auto_build:
-	# SDK is pre-compiled, nothing to build
+	# Extract the SDK run file
+	@echo "Extracting ZED SDK..."
+	mkdir -p $(EXTRACT_DIR)
+	tail -n +718 $(ZED_RUN_FILE) | zstdcat -d | tar -xf - -C $(EXTRACT_DIR)
 
-# Installation (replaces PKGBUILD package())
+	# Apply Python shebang patch
+	@echo "Applying patches..."
+	cd $(EXTRACT_DIR) && patch -Np1 < $(CURDIR)/python_shebang.patch || true
+
 override_dh_auto_install:
 	# Create target directories
-	mkdir -p debian/$(PKG_NAME)/opt/zed/settings
-	mkdir -p debian/$(PKG_NAME)/etc/udev/rules.d
-	mkdir -p debian/$(PKG_NAME)/etc/ld.so.conf.d
-	mkdir -p debian/$(PKG_NAME)/usr/bin
-	mkdir -p debian/$(PKG_NAME)/usr/share/licenses/$(PKG_NAME)
+	mkdir -p $(DEB_DESTDIR)/usr/local/zed
+	mkdir -p $(DEB_DESTDIR)/usr/local/zed/settings
+	mkdir -p $(DEB_DESTDIR)/usr/local/bin
+	mkdir -p $(DEB_DESTDIR)/etc/udev/rules.d
+	mkdir -p $(DEB_DESTDIR)/etc/ld.so.conf.d
 
-	# Install SDK components
-	cp -a extract/lib debian/$(PKG_NAME)/opt/zed/
-	cp -a extract/include debian/$(PKG_NAME)/opt/zed/
-	cp -a extract/firmware debian/$(PKG_NAME)/opt/zed/
-	cp -a extract/tools debian/$(PKG_NAME)/opt/zed/
-	cp -a extract/samples debian/$(PKG_NAME)/opt/zed/
-	cp -a extract/doc debian/$(PKG_NAME)/opt/zed/
+	# Install ZED SDK components
+	@echo "Installing ZED SDK components..."
+	cp -a $(EXTRACT_DIR)/lib $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/include $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/firmware $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/tools $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/samples $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/doc $(DEB_DESTDIR)/usr/local/zed/
 
-	# Install license
-	if [ -f extract/doc/license/LICENSE.txt ]; then \
-		install -Dm644 extract/doc/license/LICENSE.txt \
-			debian/$(PKG_NAME)/usr/share/licenses/$(PKG_NAME)/LICENSE; \
-	fi
-
-	# Install CMake files (edit path to /opt/zed)
-	sed 's|/usr/local/zed|/opt/zed|g' extract/zed-config.cmake > \
-		debian/$(PKG_NAME)/opt/zed/zed-config.cmake
-	install -Dm644 extract/zed-config-version.cmake \
-		debian/$(PKG_NAME)/opt/zed/zed-config-version.cmake
-
-	# Install pkg-config file
-	mkdir -p debian/$(PKG_NAME)/usr/lib/x86_64-linux-gnu/pkgconfig
-	sed "s/@VERSION@/$(PKG_VERSION)/g" debian/zed.pc.in > \
-		debian/$(PKG_NAME)/usr/lib/x86_64-linux-gnu/pkgconfig/zed.pc
+	# Install CMake files
+	install -m644 $(EXTRACT_DIR)/zed-config.cmake $(DEB_DESTDIR)/usr/local/zed/
+	install -m644 $(EXTRACT_DIR)/zed-config-version.cmake $(DEB_DESTDIR)/usr/local/zed/
 
 	# Install Python API script
-	if [ -f extract/get_python_api.py ]; then \
-		install -Dm755 extract/get_python_api.py \
-			debian/$(PKG_NAME)/opt/zed/get_python_api.py; \
-	fi
+	install -m755 $(EXTRACT_DIR)/get_python_api.py $(DEB_DESTDIR)/usr/local/zed/
 
-	# Install AI optimizer
-	install -Dm755 debian/helpers/zed_ai_optimizer \
-		debian/$(PKG_NAME)/usr/bin/zed_ai_optimizer
+	# Install AI optimizer script
+	install -m755 $(CURDIR)/zed_ai_optimizer $(DEB_DESTDIR)/usr/local/bin/
 
 	# Create symlinks for tools
-	find debian/$(PKG_NAME)/opt/zed/tools/ -type f -executable | while read tool_exe; do \
-		name=$$(basename $$tool_exe); \
-		ln -s /opt/zed/tools/$$name debian/$(PKG_NAME)/usr/bin/$$name; \
+	@echo "Creating tool symlinks..."
+	@find $(DEB_DESTDIR)/usr/local/zed/tools/ -type f -executable | while read tool_exe; do \
+		tool_name=$$(basename $$tool_exe); \
+		ln -sf /usr/local/zed/tools/$$tool_name $(DEB_DESTDIR)/usr/local/bin/$$tool_name; \
 	done
 
 	# Install udev rules
-	install -Dm644 extract/99-slabs.rules \
-		debian/$(PKG_NAME)/etc/udev/rules.d/99-slabs.rules
+	install -m644 $(EXTRACT_DIR)/99-slabs.rules $(DEB_DESTDIR)/etc/udev/rules.d/
 
-	# Create ld.so.conf.d file
-	echo "/opt/zed/lib" > 001-zed.conf
-	install -Dm644 001-zed.conf \
-		debian/$(PKG_NAME)/etc/ld.so.conf.d/001-zed.conf
+	# Create library configuration
+	echo "/usr/local/zed/lib" > $(DEB_DESTDIR)/etc/ld.so.conf.d/001-zed.conf
 
 	# Install Python wheel
-	python3 -m pip install --no-deps --root=debian/$(PKG_NAME) \
-		--prefix=/usr --ignore-installed $(WHL_FILE)
-
-	# Set proper permissions for ZED SDK directory
-	chmod -R 755 debian/$(PKG_NAME)/opt/zed
-	# Make settings directory group-writable for multi-user access
-	chmod 775 debian/$(PKG_NAME)/opt/zed/settings
-
-override_dh_strip:
-	# Skip stripping to preserve debug symbols
-	dh_strip --exclude=.so
+	@echo "Installing Python wheel..."
+	python3 -m pip install --no-deps --root=$(DEB_DESTDIR) --prefix=/usr \
+		--ignore-installed $(CURDIR)/$(PYZED_WHEEL)
 
 override_dh_shlibdeps:
-	# Ignore missing info for CUDA/TensorRT libs (not in Debian repos)
-	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+	# Skip shlibs dependency detection (causes issues with NVIDIA libs)
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info || true
 
-.PHONY: override_dh_auto_clean override_dh_auto_configure override_dh_auto_build override_dh_auto_install override_dh_strip override_dh_shlibdeps
+override_dh_strip:
+	# Don't strip binaries (preserves symbols for debugging)
+	@echo "Skipping strip (preserving debug symbols)"
+
+override_dh_usrlocal:
+	# Skip usrlocal check (ZED SDK must be in /usr/local/zed)
+	@echo "Skipping usrlocal check"
