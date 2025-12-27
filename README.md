@@ -47,9 +47,11 @@ zed-sdk-debian-package/
 │   ├── amd64/           # Ubuntu 22.04 x86_64, CUDA 12.8
 │   └── jp60/            # JetPack 6.0, L4T 36.4
 │
-└── v4.2/                # ZED SDK 4.2 (Legacy)
-    ├── amd64/           # Ubuntu 22.04 x86_64
-    └── jp60/            # JetPack 5.x, L4T 36.3
+├── v4.2/                # ZED SDK 4.2 (Legacy)
+│   ├── amd64/           # Ubuntu 22.04 x86_64
+│   └── jp60/            # JetPack 5.x, L4T 36.3
+│
+└── tests/               # Build test suite
 ```
 
 ---

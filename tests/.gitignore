@@ -1,0 +1,8 @@
+# Test results and logs
+results/
+reports/
+*.log
+
+# Temporary files
+*.tmp
+*~
