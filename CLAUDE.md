@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-This project creates Debian packages for the StereoLabs ZED SDK using makedeb's PKGBUILD system. It provides packaging scripts for multiple ZED SDK versions (4.2, 5.0, 5.0.5) across different platforms (x86_64/AMD64, ARM64, and NVIDIA Jetson) by extracting content from the official ZED SDK `.run` installers and repackaging them into `.deb` packages suitable for Debian/Ubuntu systems.
+This project creates Debian packages for the StereoLabs ZED SDK using the standard **debhelper** packaging system. It provides packaging scripts for multiple ZED SDK versions (4.2, 5.0.5, 5.1.2) across different platforms (AMD64 and NVIDIA Jetson) by extracting content from the official ZED SDK `.run` installers and repackaging them into `.deb` packages suitable for Debian/Ubuntu systems.
+
+All builds use Docker containers to ensure reproducible builds across different host environments.
 
 ## Repository Structure
 
@@ -11,102 +13,131 @@ The repository uses a **version-based organization** where each ZED SDK version 
 ```
 zed-sdk-debian-package/
 ├── v4.2/                     # ZED SDK 4.2 (Legacy)
-│   ├── x86_64/              # Split packages: zed-sdk + python3-pyzed
-│   ├── jp60/                # JetPack 6.0 / L4T 36.3
-│   └── shared/              # Shared files between architectures
+│   ├── amd64/               # x86_64 desktop/server (Ubuntu 22.04, CUDA 12)
+│   └── jp60/                # JetPack 6.0 / L4T 36.3
 │
-├── v5.0/                     # ZED SDK 5.0 (Maintenance)
-│   ├── x86_64/              # Split packages: zed-sdk + python3-pyzed
-│   ├── jp60/                # JetPack 6.0 / L4T 36.3
-│   └── shared/
+├── v5.0.5/                   # ZED SDK 5.0.5 (Stable)
+│   ├── amd64/               # x86_64 desktop/server (Ubuntu 22.04, CUDA 12.8)
+│   └── jp60/                # JetPack 6.0 / L4T 36.4
 │
-└── v5.0.5/                   # ZED SDK 5.0.5 (Latest, Active Development)
-    ├── amd64/               # Consolidated package (SDK + Python)
-    ├── arm64/               # Generic ARM64 support
-    ├── jp60/                # JetPack 6.0 / L4T 36.4
-    └── tests/               # Docker-based test suite
+├── v5.1.2/                   # ZED SDK 5.1.2 (Latest)
+│   ├── amd64/               # x86_64 desktop/server (Ubuntu 22.04, CUDA 12.8)
+│   └── jp60/                # JetPack 6.0 / L4T 36.3
+│
+└── tests/                    # Build test suite (docker-build for all versions)
 ```
+
+Each platform directory contains:
+- `debian/` - Debhelper packaging files (control, rules, changelog, maintainer scripts)
+- `docker/` - Docker build environment (Dockerfile.build, build scripts)
+- `Makefile` - Build automation
+- `README.md` - Platform-specific documentation
+- `zed.pc.in` - pkg-config template
 
 ## Version Comparison
 
-### v4.2 & v5.0 (Legacy Structure)
+All versions now use **debhelper** with **consolidated packaging** (SDK + Python in single .deb).
 
-**Package Strategy:** Split packaging
-- Separate `zed-sdk` package (core SDK)
-- Separate `python3-pyzed` package (Python bindings)
+### v4.2 (Legacy)
 
-**Architecture Naming:**
-- `x86_64/` - Desktop/Server systems
-- `jp60/` - NVIDIA Jetson (JetPack 6.0)
+**SDK Version:** 4.2
+**Platforms:** amd64, jp60
+**CUDA:** 12.0
+**L4T:** 36.3 (Jetson)
+**AI Tools:** Basic `zed_download_ai_models` script
+**Status:** Legacy, critical fixes only
 
-**Features:**
-- Basic `zed_download_ai_models` script
-- Manual Python package installation required
-- L4T 36.3 for Jetson
+### v5.0.5 (Stable)
 
-**Build:** Each architecture has nested package directories
+**SDK Version:** 5.0.5
+**Platforms:** amd64, jp60
+**CUDA:** 12.8
+**TensorRT:** 10.9
+**L4T:** 36.4 (Jetson, JetPack 6.0 GA)
+**AI Tools:** Advanced `zed_ai_optimizer` with platform detection
+**Status:** Stable, maintenance mode
 
-### v5.0.5 (Current Structure)
+### v5.1.2 (Latest)
 
-**Package Strategy:** Consolidated packaging
-- Single `zed-sdk` package includes both SDK and Python bindings
-
-**Architecture Naming:**
-- `amd64/` - Desktop/Server x86_64 systems
-- `arm64/` - Generic ARM64 systems (new!)
-- `jp60/` - NVIDIA Jetson (JetPack 6.0)
-
-**Features:**
-- Advanced `zed_ai_optimizer` script with platform detection
-- Comprehensive Docker-based test suite
-- L4T 36.4 for Jetson (JetPack 6.0 GA)
-- Improved dependency management
-
-**Build:** Flat architecture directories with all files at top level
+**SDK Version:** 5.1.2
+**Platforms:** amd64, jp60
+**CUDA:** 12.8
+**TensorRT:** 10.9
+**L4T:** 36.3 (Jetson)
+**AI Tools:** Advanced `zed_ai_optimizer` with platform detection
+**Status:** Active development, latest features
 
 ## Technology Stack
 
-- **makedeb**: Creates Debian packages from Arch-inspired PKGBUILD scripts
+- **debhelper**: Standard Debian package building system (dpkg-buildpackage, dh)
+- **Docker**: Isolated build environments for reproducible builds
 - **Bash scripting**: Package lifecycle management (postinst, prerm, postrm)
 - **systemd**: Service management on Jetson devices
 - **Python pip**: Python wheel package installation
-- **Docker**: Testing and validation (v5.0.5)
+- **Make**: Build automation and test orchestration
 
-## Platform Variants (v5.0.5)
+## Platform Variants
 
 ### AMD64 (Desktop/Server)
 - **Target:** x86_64 desktop and server systems with NVIDIA GPUs
-- **SDK:** `ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v5.0.5.zstd.run`
-- **Python wheel:** `pyzed-5.0-cp310-cp310-linux_x86_64.whl`
+- **SDK installer:** `ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v*.zstd.run`
+- **Python wheel:** `pyzed-*.0-cp310-cp310-linux_x86_64.whl`
 - **Optimization:** CUDA GPU acceleration via TensorRT
-- **CUDA:** 12.8, TensorRT 10.9
-
-### ARM64 (Generic ARM)
-- **Target:** Generic ARM64 systems (non-Jetson)
-- **SDK:** Same as AMD64 but for ARM architecture
-- **Python wheel:** `pyzed-5.0-cp310-cp310-linux_aarch64.whl`
-- **Optimization:** CPU-based optimization fallback
-- **Note:** No GPU acceleration
+- **Base image:** Ubuntu 22.04
+- **CUDA:** 12.0-12.8 (version dependent)
+- **TensorRT:** 10.9 (v5.x)
 
 ### JP60 (NVIDIA Jetson)
 - **Target:** NVIDIA Jetson platforms (Orin, Xavier, etc.)
-- **SDK:** `ZED_SDK_Tegra_L4T36.4_v5.0.5.zstd.run`
-- **Python wheel:** `pyzed-5.0-cp310-cp310-linux_aarch64.whl`
+- **SDK installer:** `ZED_SDK_Tegra_L4T36.*_v*.zstd.run`
+- **Python wheel:** `pyzed-*.0-cp310-cp310-linux_aarch64.whl`
 - **Optimization:** NPU/DLA hardware acceleration
+- **Base image:** NVIDIA L4T with TensorRT
+- **L4T:** 36.3-36.4 (JetPack 6.0)
 - **Special features:**
   - Conflicts with `libv4l-dev` (breaks hardware encoding)
   - Includes `nvidia-l4t-camera` dependency
-  - Configures `nvargus-daemon` for multiple cameras
+  - Configures `nvargus-daemon` for infinite camera timeout
   - Installs and enables `zed_media_server_cli.service`
 
-## makedeb PKGBUILD System
+## Package Features
+
+### pkg-config Support
+All packages install a pkg-config file for easy library discovery:
+
+**AMD64:** `/usr/lib/x86_64-linux-gnu/pkgconfig/zed.pc`
+**JP60:** `/usr/lib/aarch64-linux-gnu/pkgconfig/zed.pc`
+
+Usage:
+```bash
+pkg-config --cflags --libs zed
+# Output: -I/usr/local/zed/include -L/usr/local/zed/lib -lsl_zed -lsl_ai
+```
+
+CMake integration:
+```cmake
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ZED REQUIRED zed)
+include_directories(${ZED_INCLUDE_DIRS})
+link_directories(${ZED_LIBRARY_DIRS})
+target_link_libraries(your_target ${ZED_LIBRARIES})
+```
+
+## Debhelper Packaging System
+
+### Package Structure
+- **debian/control** - Package metadata, dependencies, conflicts
+- **debian/rules** - Build instructions (uses dh sequencer)
+- **debian/changelog** - Version history in Debian format
+- **debian/source/format** - Source package format (3.0 quilt)
+- **debian/*.{postinst,prerm,postrm}** - Maintainer scripts
 
 ### Architecture Naming
 - Uses Debian architecture names: `amd64` (not x86_64), `arm64` (not aarch64)
 - Architecture detected via `dpkg --print-architecture`
 - Important for package compatibility with Debian/Ubuntu systems
 
-### Package Scripts (Debian Maintainer Scripts)
+### Maintainer Scripts (Package Lifecycle)
 
 **postinst.sh** - Post-installation script
 1. Creates 'zed' group for SDK access control
@@ -130,21 +161,76 @@ zed-sdk-debian-package/
   - 'zed' group (if empty)
   - Settings and resources directories
 
-### Key PKGBUILD Variables
-- `${srcdir}`: Temporary source directory for extraction
-- `${pkgdir}`: Staging directory for package contents (becomes `/` after install)
-- `${pkgname}`: Package name (e.g., zed-sdk)
-- `${pkgver}`: SDK version (e.g., 5.0.5)
-- `${pkgrel}`: Package release number
+### Key Debhelper Variables (debian/rules)
+- `$(CURDIR)`: Current source directory
+- `$(DEB_DESTDIR)`: Staging directory for package contents (becomes `/` after install)
+- `PKG_NAME`: Package name from debian/control (zed-sdk)
+- `PKG_VERSION`: Version from debian/changelog
+- `ZED_VERSION`: Extracted SDK version for substitution
 
-## Build Process (v5.0.5)
+## Docker Build Infrastructure
 
-### 1. prepare() Function
-- Extracts the self-extracting `.run` installer at line 718
-- Uses `zstdcat -d` for zstd decompression and `tar -xf` for extraction
-- Applies `python_shebang.patch` to fix Python script shebangs (#!/usr/bin/env python3)
+All platforms include Docker-based build environments for reproducible builds:
 
-### 2. package() Function
+### Directory Structure
+```
+{version}/{platform}/docker/
+├── Dockerfile.build         # Build environment definition
+├── docker-build.sh          # Main build orchestration script
+└── build-in-docker.sh       # Runs inside container
+```
+
+### Build Environment Images
+
+**AMD64:**
+- Base: `ubuntu:22.04`
+- Tools: debhelper, dpkg-dev, devscripts, fakeroot, zstd, python3-dev
+- Purpose: Clean Ubuntu 22.04 environment for x86_64 builds
+
+**JP60 (Jetson):**
+- Base: `nvcr.io/nvidia/l4t-tensorrt:r8.6.2.3-runtime` (or similar L4T base)
+- Tools: Same as AMD64 plus L4T-specific dependencies
+- Purpose: Jetson L4T environment with TensorRT support
+
+### Host UID/GID Preservation
+Docker containers run as host user to avoid permission issues:
+```bash
+--user "${HOST_UID}:${HOST_GID}"
+```
+
+This ensures:
+- Output files owned by host user (not root)
+- No permission denied errors when writing packages
+- Build artifacts can be accessed by host user
+
+### Temporary Build Directory
+To avoid permission issues, builds use `/tmp` inside containers:
+```bash
+BUILD_DIR="/tmp/zed-build-$$"
+```
+
+This solves permission issues when the mounted `/build` directory parent is not writable by the container user.
+
+## Build Process
+
+### Docker Build Workflow
+1. **Build Docker image** - Creates Ubuntu 22.04 (AMD64) or L4T (Jetson) environment
+2. **Run build container** - Mounts source directory, runs as host UID/GID
+3. **Execute dpkg-buildpackage** - Standard Debian package build inside container
+4. **Copy output** - Package files copied to `output/` directory
+
+### Debhelper Build Phases (debian/rules)
+
+**override_dh_auto_clean:**
+- Removes extracted SDK files and build artifacts
+
+**override_dh_auto_build:**
+- Downloads SDK `.run` installer if not present
+- Extracts installer using `tail -n +718` and `zstdcat -d`
+- Downloads Python wheel if not present
+- Applies `python_shebang.patch` to fix Python shebangs
+
+**override_dh_auto_install:**
 Key installation steps:
 1. Creates directory structure including `/usr/local/zed/settings`
 2. Installs core SDK components:
@@ -160,24 +246,33 @@ Key installation steps:
 
 ### Build Commands
 
-**v5.0.5:**
+**Recommended (Docker build):**
 ```bash
-cd v5.0.5/amd64/  # or arm64/, or jp60/
-make build        # Downloads SDK, builds package
+cd v5.1.2/amd64/         # Choose version and platform
+make docker-build        # Build in Docker container
 ```
 
-**v4.2 & v5.0:**
-```bash
-cd v5.0/x86_64/zed-sdk/      # or jp60/zed-sdk/
-make              # Build main SDK package
+Output: `output/zed-sdk_*.deb` and build metadata files
 
-cd v5.0/x86_64/python3-pyzed/  # or jp60/python3-pyzed/
-make              # Build Python package
+**Native build (requires Ubuntu 22.04):**
+```bash
+cd v5.1.2/amd64/
+make build              # Builds using host dpkg-buildpackage
 ```
 
-## AI Model Optimization (v5.0.5)
+**Interactive debugging:**
+```bash
+make docker-shell       # Opens shell in build container
+```
 
-The `zed_ai_optimizer` script provides comprehensive AI model management:
+**All platforms follow the same pattern:**
+- v4.2/{amd64,jp60}
+- v5.0.5/{amd64,jp60}
+- v5.1.2/{amd64,jp60}
+
+## AI Model Optimization (v5.x)
+
+The `zed_ai_optimizer` script (included in v5.0.5 and v5.1.2) provides comprehensive AI model management:
 
 ### Features
 - **Platform detection:** Automatically detects Jetson/GPU/CPU
@@ -223,32 +318,55 @@ sudo zed_ai_optimizer --help    # Show all options
 - **Udev rules:** `/etc/udev/rules.d/99-slabs.rules`
 - **[Jetson] Service:** `/lib/systemd/system/zed_media_server_cli.service`
 
-## Testing and Validation (v5.0.5)
+## Testing and Validation
 
-### Docker-based Test Suite
+### Build Test Suite
 
-The v5.0.5 branch includes a comprehensive test suite:
+The repository includes a comprehensive build test suite in the top-level `tests/` directory:
 
 ```
-v5.0.5/tests/
-├── docker/
-│   ├── amd64/                   # AMD64 test containers
-│   ├── arm64/                   # ARM64 test containers
-│   └── common/                  # Shared scripts
-├── scripts/
-│   ├── build-test-images.sh     # Build test Docker images
-│   ├── run-comparison.sh        # Compare .deb vs .run install
-│   └── generate-report.sh       # Generate test reports
-└── Makefile                     # Test automation
+tests/
+├── Makefile                     # Test orchestration
+└── README.md                    # Test documentation
 ```
+
+The test suite runs `docker-build` for all versions and platforms, verifying that:
+- Docker images build successfully
+- Packages build without errors
+- Output `.deb` files are created
+- Package metadata is correct
 
 ### Running Tests
 ```bash
-cd v5.0.5/tests/
-make build-images              # Build test Docker images
-make test-amd64                # Test AMD64 package
-make test-arm64                # Test ARM64 package
-make report                    # Generate comparison report
+cd tests/
+
+# Test all versions and platforms
+make all
+
+# Test specific version
+make test-v5.1.2
+make test-v5.0.5
+make test-v4.2
+
+# Check build status
+make status
+
+# Clean built packages
+make clean
+```
+
+Example output:
+```
+========================================
+Build Status Summary
+========================================
+
+v4.2/amd64:          ✓ Built (65M)
+v4.2/jp60:           ✓ Built (55M)
+v5.0.5/amd64:        ✓ Built (72M)
+v5.0.5/jp60:         ✓ Built (32M)
+v5.1.2/amd64:        ✓ Built (73M)
+v5.1.2/jp60:         ✓ Built (32M)
 ```
 
 ### Manual Installation Testing
@@ -344,16 +462,17 @@ ZED_Diagnostic
 
 ### Version Selection
 When contributing, choose the appropriate version:
-- **v5.0.5**: Active development, new features
-- **v5.0**: Maintenance only, bug fixes
+- **v5.1.2**: Active development, latest features
+- **v5.0.5**: Stable, maintenance mode
 - **v4.2**: Legacy, critical fixes only
 
 ### Code Standards
-1. Choose the correct variant directory (`amd64/`, `arm64/`, `jp60/`)
-2. Follow makedeb syntax (Debian-style, not pure Arch PKGBUILD)
+1. Choose the correct variant directory (`amd64/`, `jp60/`)
+2. Follow standard debhelper conventions (debian/control, debian/rules)
 3. Use Debian architecture names (`amd64`, not `x86_64`)
-4. Test on the specific platform variant
-5. Update checksums when changing source files (use `makedeb --printsrcinfo`)
+4. Test builds using Docker: `make docker-build`
+5. Update debian/changelog when changing package version
+6. Ensure all platforms have consistent structure (debian/, docker/, Makefile, README.md, zed.pc.in)
 
 ### Documentation Markers
 Document platform-specific changes in ROADMAP.md or commit messages:
@@ -373,29 +492,31 @@ Document platform-specific changes in ROADMAP.md or commit messages:
 ## Known Issues
 
 ### All Versions
-1. Package may contain references to `$srcdir` and `$pkgdir` in Python cache files (non-critical, doesn't affect functionality)
-2. Users must manually join 'video' group for camera access (security consideration)
-3. Initial AI optimization takes 30-60 minutes (one-time process)
+1. Users must manually join 'video' group for camera access (security consideration)
+2. Initial AI optimization takes 30-60 minutes (one-time process, v5.x only)
+3. Docker builds on ARM64 platforms may be slow on x86_64 hosts due to QEMU emulation
 
-### v4.2 & v5.0 Specific
-1. Python package must be installed separately
-2. No automated testing framework
+### v4.2 Specific
+1. Uses older AI model download script (zed_download_ai_models) instead of zed_ai_optimizer
+2. CUDA 12.0 support only (newer versions use CUDA 12.8)
 
 ## Migration Guide
 
-### From Branches to Version Directories
+### From makedeb to debhelper (Completed December 2024)
 
-**Old (branch-based):**
-```bash
-git clone -b v5.0.5 https://github.com/.../zed-sdk-debian-package.git
-cd zed-sdk-debian-package/amd64/
-```
+The repository was converted from makedeb (PKGBUILD-based) to standard debhelper:
 
-**New (version directory-based):**
-```bash
-git clone https://github.com/.../zed-sdk-debian-package.git
-cd zed-sdk-debian-package/v5.0.5/amd64/
-```
+**What changed:**
+- Build system: `makedeb` → `dpkg-buildpackage`
+- Package files: `PKGBUILD` → `debian/{control,rules,changelog}`
+- Build method: Native → Docker-based (recommended)
+- All platforms now use consistent structure
+
+**For existing users:**
+- Old .deb packages still work - no reinstallation needed
+- New builds use same package name (`zed-sdk`)
+- Installation paths unchanged
+- To rebuild from source, use `make docker-build` instead of `makedeb`
 
 ### Upgrading Between Versions
 To upgrade from one ZED SDK version to another:
@@ -411,15 +532,46 @@ sudo dpkg -i zed-sdk*.deb
 sudo apt -f install
 ```
 
+## Conversion History
+
+### December 2024: makedeb to debhelper Migration
+
+The repository was converted from makedeb (PKGBUILD-based) to standard debhelper:
+
+**Platforms converted:**
+1. v5.1.2/jp60 - First conversion, established pattern
+2. v5.0.5/jp60 - Applied same pattern
+3. v5.0.5/amd64 - Extended to AMD64 platform
+4. v4.2/jp60 - Legacy platform conversion
+5. v4.2/amd64 - Completed AMD64 coverage
+6. v5.1.2/amd64 - Latest version AMD64 support
+
+**Key improvements:**
+- Added Docker build infrastructure to all platforms
+- Unified directory structure (debian/, docker/, Makefile, README.md)
+- Added pkg-config support (zed.pc.in) to v5.x versions
+- Created top-level test suite (tests/) for build validation
+- Fixed permission issues with temporary build directories
+- Standardized documentation across all platforms
+- Removed legacy makedeb files and patterns
+
+**Issues fixed:**
+- Permission denied errors when building .deb in Docker (#1)
+- Garbled ANSI codes in test output (#2)
+- Missing docker-build targets in some platforms (#3)
+- Inconsistent .gitignore patterns (#4)
+
 ## Future Development
 
 Priority tasks:
-1. **CI/CD Pipeline:** Automated builds and testing
-2. **Runtime-only Package:** Smaller package without development files
-3. **Split Packages:** Separate core, dev, python, tools, ai packages
-4. **Dependency Management:** Better handling of TensorRT/cuDNN versions
-5. **Settings Preservation:** Maintain user settings during upgrades
-6. **Multi-version Support:** Allow multiple SDK versions installed simultaneously
+1. **CI/CD Pipeline:** Automated builds and testing for all platforms
+2. **GitHub Actions:** Automated build verification on push
+3. **Runtime-only Package:** Smaller package without development files
+4. **Split Packages:** Separate core, dev, python, tools, ai packages
+5. **Dependency Management:** Better handling of TensorRT/cuDNN versions
+6. **Settings Preservation:** Maintain user settings during upgrades
+7. **Multi-version Support:** Allow multiple SDK versions installed simultaneously
+8. **ARM64 Generic Support:** Add v5.1.2/arm64 platform
 
 See [ROADMAP.md](ROADMAP.md) for detailed planning.
 
