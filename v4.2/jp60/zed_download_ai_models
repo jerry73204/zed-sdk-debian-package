@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+
+[ "$(id -u)" -eq 0 ] || {
+    echo "Error: This script must be run as root.";
+    exit 1;
+}
+
+ZED_Diagnostic -aid
+ZED_Diagnostic -aio

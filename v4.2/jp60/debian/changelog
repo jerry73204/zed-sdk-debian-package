@@ -1,0 +1,8 @@
+zed-sdk-jetpack (4.2-1) jammy; urgency=medium
+
+  * Initial Debian package for ZED SDK 4.2
+  * Target: NVIDIA Jetson (L4T 36.3 / JetPack 5.x)
+  * Consolidated SDK and Python bindings package
+  * Features: AI model download, ZED Media Server
+
+ -- Hsiang-Jui Lin <jerry73204@gmail.com>  Mon, 14 Oct 2024 00:00:00 +0000

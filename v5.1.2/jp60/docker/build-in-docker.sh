@@ -21,8 +21,17 @@ if [ ! -f "/.dockerenv" ] && [ ! -f "/run/.containerenv" ]; then
     fi
 fi
 
-# Navigate to the mounted build directory
-cd /build/package
+# Create a temporary build directory in /tmp (writable by user)
+BUILD_DIR="/tmp/zed-build-$$"
+mkdir -p "$BUILD_DIR"
+
+# Copy source files to temporary build directory
+echo ""
+echo "Copying source files to temporary build directory..."
+cp -a /build/package/* "$BUILD_DIR/"
+
+# Navigate to the temporary build directory
+cd "$BUILD_DIR"
 
 # Display current directory and files
 echo ""
@@ -55,33 +64,36 @@ if [ $? -eq 0 ]; then
     echo "Generated package(s):"
     ls -lh ../*.deb 2>/dev/null || echo "No .deb files found"
 
-    # Move packages to current directory for easier access
-    mv ../*.deb . 2>/dev/null || true
-
     # Copy to output directory if it exists
     if [ -d "/build/output" ]; then
         echo ""
         echo "Copying package to /build/output..."
-        cp -v *.deb /build/output/ 2>/dev/null || true
+        cp -v ../*.deb /build/output/ 2>/dev/null || true
 
         # Also copy build logs if they exist
-        cp -v *.log /build/output/ 2>/dev/null || true
-        cp -v *.buildinfo /build/output/ 2>/dev/null || true
-        cp -v *.changes /build/output/ 2>/dev/null || true
+        cp -v ../*.buildinfo /build/output/ 2>/dev/null || true
+        cp -v ../*.changes /build/output/ 2>/dev/null || true
     fi
 
     echo ""
     echo "Package information:"
-    dpkg-deb --info *.deb 2>/dev/null | head -20 || true
+    dpkg-deb --info ../*.deb 2>/dev/null | head -20 || true
 
     echo ""
     echo "=========================================="
     echo "Build process completed!"
     echo "=========================================="
+
+    # Clean up temporary build directory
+    cd /
+    rm -rf "$BUILD_DIR"
 else
     echo ""
     echo "=========================================="
     echo "Build failed!"
     echo "=========================================="
+    # Clean up temporary build directory
+    cd /
+    rm -rf "$BUILD_DIR"
     exit 1
 fi

@@ -1,0 +1,49 @@
+# Downloaded SDK files
+ZED_SDK_*.run
+pyzed-*.whl
+
+# Build directories
+build/
+debian/.debhelper/
+debian/files
+debian/debhelper-build-stamp
+debian/zed-sdk-jetpack/
+debian/zed-sdk-jetpack.substvars
+debian/*.log
+debian/*.debhelper
+
+# Generated packages
+*.deb
+*.ddeb
+*.buildinfo
+*.changes
+*.dsc
+*.tar.gz
+*.tar.xz
+
+# Output directory contents (keep the directory itself)
+output/*
+!output/.gitkeep
+
+# Temporary files
+*.log
+*.tmp
+*~
+.*.swp
+.*.swo
+
+# Debian build artifacts
+debian/tmp/
+debian/*.substvars
+debian/*.debhelper.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*

@@ -6,8 +6,8 @@ set -e
 echo "=========================================="
 echo "ZED SDK JP60 Docker Build Script"
 echo "=========================================="
-echo "Version: 5.0.5"
-echo "Platform: NVIDIA Jetson (L4T 36.4)"
+echo "Version: 4.2"
+echo "Platform: NVIDIA Jetson (L4T 36.3)"
 echo "=========================================="
 
 # Check if we're running inside the container

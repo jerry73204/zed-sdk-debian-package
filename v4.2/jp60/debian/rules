@@ -1,0 +1,128 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# ZED SDK version
+ZED_VERSION = 4.2
+ZED_VERSION_MAJOR_MINOR = 4.2
+
+# Source files
+ZED_RUN_FILE = ZED_SDK_Tegra_L4T36.3_v$(ZED_VERSION).run
+PYZED_WHEEL = pyzed-$(ZED_VERSION)-cp310-cp310-linux_aarch64.whl
+
+# Download URLs
+ZED_SDK_URL = https://download.stereolabs.com/zedsdk/$(ZED_VERSION)/l4t36.3/jetsons
+PYZED_URL = https://download.stereolabs.com/zedsdk/$(ZED_VERSION)/whl/linux_aarch64/$(PYZED_WHEEL)
+
+# Directories
+BUILD_DIR = $(CURDIR)/build
+EXTRACT_DIR = $(BUILD_DIR)/extract
+DEB_DESTDIR = $(CURDIR)/debian/zed-sdk-jetpack
+
+export DH_VERBOSE = 1
+export DEB_BUILD_OPTIONS = nostrip
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	rm -rf $(BUILD_DIR)
+	rm -f $(ZED_RUN_FILE) $(PYZED_WHEEL)
+	dh_auto_clean
+
+override_dh_auto_configure:
+	# Download SDK and Python wheel if not present
+	@echo "Downloading ZED SDK files..."
+	@if [ ! -f "$(ZED_RUN_FILE)" ]; then \
+		echo "Downloading $(ZED_RUN_FILE)..."; \
+		wget -O $(ZED_RUN_FILE) $(ZED_SDK_URL); \
+	else \
+		echo "$(ZED_RUN_FILE) already exists"; \
+	fi
+	@if [ ! -f "$(PYZED_WHEEL)" ]; then \
+		echo "Downloading $(PYZED_WHEEL)..."; \
+		wget -O $(PYZED_WHEEL) $(PYZED_URL); \
+	else \
+		echo "$(PYZED_WHEEL) already exists"; \
+	fi
+
+override_dh_auto_build:
+	# Extract the SDK run file
+	@echo "Extracting ZED SDK..."
+	mkdir -p $(EXTRACT_DIR)
+	tail -n +718 $(ZED_RUN_FILE) | zstdcat -d | tar -xf - -C $(EXTRACT_DIR)
+
+	# Apply Python shebang patch
+	@echo "Applying patches..."
+	cd $(EXTRACT_DIR) && patch -Np1 < $(CURDIR)/python_shebang.patch || true
+
+override_dh_auto_install:
+	# Create target directories
+	mkdir -p $(DEB_DESTDIR)/usr/local/zed
+	mkdir -p $(DEB_DESTDIR)/usr/local/zed/settings
+	mkdir -p $(DEB_DESTDIR)/usr/local/bin
+	mkdir -p $(DEB_DESTDIR)/etc/udev/rules.d
+	mkdir -p $(DEB_DESTDIR)/etc/ld.so.conf.d
+	mkdir -p $(DEB_DESTDIR)/etc/systemd/system
+	mkdir -p $(DEB_DESTDIR)/usr/lib/aarch64-linux-gnu/pkgconfig
+
+	# Install ZED SDK components
+	@echo "Installing ZED SDK components..."
+	cp -a $(EXTRACT_DIR)/lib $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/include $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/firmware $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/tools $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/samples $(DEB_DESTDIR)/usr/local/zed/
+	cp -a $(EXTRACT_DIR)/doc $(DEB_DESTDIR)/usr/local/zed/
+
+	# Install GMSL drivers if available
+	@if [ -d "$(EXTRACT_DIR)/drivers" ]; then \
+		cp -a $(EXTRACT_DIR)/drivers $(DEB_DESTDIR)/usr/local/zed/; \
+	fi
+
+	# Install CMake files
+	install -m644 $(EXTRACT_DIR)/zed-config.cmake $(DEB_DESTDIR)/usr/local/zed/
+	install -m644 $(EXTRACT_DIR)/zed-config-version.cmake $(DEB_DESTDIR)/usr/local/zed/
+
+	# Install Python API script
+	install -m755 $(EXTRACT_DIR)/get_python_api.py $(DEB_DESTDIR)/usr/local/zed/
+
+	# Install AI model download script
+	install -m755 $(CURDIR)/zed_download_ai_models $(DEB_DESTDIR)/usr/local/bin/
+
+	# Create symlinks for tools
+	@echo "Creating tool symlinks..."
+	@find $(DEB_DESTDIR)/usr/local/zed/tools/ -type f -executable | while read tool_exe; do \
+		tool_name=$$(basename $$tool_exe); \
+		ln -sf /usr/local/zed/tools/$$tool_name $(DEB_DESTDIR)/usr/local/bin/$$tool_name; \
+	done
+
+	# Install udev rules
+	install -m644 $(EXTRACT_DIR)/99-slabs.rules $(DEB_DESTDIR)/etc/udev/rules.d/
+
+	# Create library configuration
+	echo "/usr/local/zed/lib" > $(DEB_DESTDIR)/etc/ld.so.conf.d/001-zed.conf
+
+	# Install pkg-config file
+	sed "s/@VERSION@/$(ZED_VERSION)/g" $(CURDIR)/zed.pc.in > $(DEB_DESTDIR)/usr/lib/aarch64-linux-gnu/pkgconfig/zed.pc
+
+	# Install ZED Media Server service
+	@if [ -f "$(EXTRACT_DIR)/zed_media_server_cli.service" ]; then \
+		install -m644 $(EXTRACT_DIR)/zed_media_server_cli.service $(DEB_DESTDIR)/etc/systemd/system/; \
+	fi
+
+	# Install Python wheel
+	@echo "Installing Python wheel..."
+	python3 -m pip install --no-deps --root=$(DEB_DESTDIR) --prefix=/usr \
+		--ignore-installed $(CURDIR)/$(PYZED_WHEEL)
+
+override_dh_shlibdeps:
+	# Skip shlibs dependency detection (causes issues with NVIDIA libs)
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info || true
+
+override_dh_strip:
+	# Don't strip binaries (preserves symbols for debugging)
+	@echo "Skipping strip (preserving debug symbols)"
+
+override_dh_usrlocal:
+	# Skip usrlocal check (ZED SDK must be in /usr/local/zed)
+	@echo "Skipping usrlocal check"
