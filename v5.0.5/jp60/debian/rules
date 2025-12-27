@@ -101,6 +101,10 @@ override_dh_auto_install:
 		install -m644 $(EXTRACT_DIR)/zed_media_server_cli.service $(DEB_DESTDIR)/etc/systemd/system/; \
 	fi
 
+	# Install pkg-config file
+	mkdir -p $(DEB_DESTDIR)/usr/lib/aarch64-linux-gnu/pkgconfig
+	sed "s/@VERSION@/$(ZED_VERSION)/g" $(CURDIR)/zed.pc.in > $(DEB_DESTDIR)/usr/lib/aarch64-linux-gnu/pkgconfig/zed.pc
+
 	# Install Python wheel
 	@echo "Installing Python wheel..."
 	python3 -m pip install --no-deps --root=$(DEB_DESTDIR) --prefix=/usr \
