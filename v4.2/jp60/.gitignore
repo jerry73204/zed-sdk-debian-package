@@ -4,22 +4,25 @@ pyzed-*.whl
 
 # Build directories
 build/
+extract/
 debian/.debhelper/
+debian/zed-sdk-jetpack/
+debian/tmp/
+
+# Debian build artifacts
 debian/files
 debian/debhelper-build-stamp
-debian/zed-sdk-jetpack/
-debian/zed-sdk-jetpack.substvars
-debian/*.log
+debian/*.substvars
 debian/*.debhelper
+debian/*.debhelper.log
 
-# Generated packages
-*.deb
-*.ddeb
-*.buildinfo
-*.changes
-*.dsc
-*.tar.gz
-*.tar.xz
+# Generated packages (in parent directory)
+../*.deb
+../*.buildinfo
+../*.changes
+
+# Generated config files
+001-zed.conf
 
 # Output directory contents (keep the directory itself)
 output/*
@@ -31,11 +34,6 @@ output/*
 *~
 .*.swp
 .*.swo
-
-# Debian build artifacts
-debian/tmp/
-debian/*.substvars
-debian/*.debhelper.log
 
 # Python cache
 __pycache__/

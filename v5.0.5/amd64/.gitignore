@@ -7,21 +7,22 @@ build/
 extract/
 debian/.debhelper/
 debian/zed-sdk/
+debian/tmp/
 
-# Build artifacts
+# Debian build artifacts
 debian/files
 debian/debhelper-build-stamp
 debian/*.substvars
 debian/*.debhelper
 debian/*.debhelper.log
 
-# Generated config files
-001-zed.conf
-
-# Build outputs (in parent directory)
+# Generated packages (in parent directory)
 ../*.deb
 ../*.buildinfo
 ../*.changes
+
+# Generated config files
+001-zed.conf
 
 # Output directory contents (keep the directory itself)
 output/*
@@ -29,4 +30,18 @@ output/*
 
 # Temporary files
 *.log
+*.tmp
 *~
+.*.swp
+.*.swo
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*

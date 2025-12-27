@@ -1,5 +1,7 @@
 # Build artifacts
 *.deb
+*.buildinfo
+*.changes
 *.log
 src/
 pkg/
@@ -15,6 +17,8 @@ pkg/
 v*/*/src/
 v*/*/pkg/
 v*/*/*.deb
+v*/*/*.buildinfo
+v*/*/*.changes
 v*/*/*.log
 v*/*/*.run
 v*/*/*.whl
@@ -23,10 +27,14 @@ v*/*/*.whl
 v*/*/zed-sdk/src/
 v*/*/zed-sdk/pkg/
 v*/*/zed-sdk/*.deb
+v*/*/zed-sdk/*.buildinfo
+v*/*/zed-sdk/*.changes
 v*/*/zed-sdk/*.log
 v*/*/python3-pyzed/src/
 v*/*/python3-pyzed/pkg/
 v*/*/python3-pyzed/*.deb
+v*/*/python3-pyzed/*.buildinfo
+v*/*/python3-pyzed/*.changes
 v*/*/python3-pyzed/*.log
 
 # Test results (v5.0.5)
