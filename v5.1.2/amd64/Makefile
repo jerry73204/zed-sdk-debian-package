@@ -8,7 +8,7 @@ VER_MAJOR_MINOR := $(shell echo $(PKG_VERSION) | cut -d- -f1 | cut -d. -f1-2)
 RUN_FILE := ZED_SDK_Ubuntu22_cuda12.8_tensorrt10.9_v$(shell echo $(PKG_VERSION) | cut -d- -f1).zstd.run
 WHL_FILE := pyzed-$(VER_MAJOR_MINOR)-cp310-cp310-linux_x86_64.whl
 
-.PHONY: help build clean clean-all download check-deps
+.PHONY: help build clean clean-all download check-deps docker-build docker-shell
 
 help:
 	@echo "ZED SDK AMD64 Debian Package (debhelper)"
@@ -17,12 +17,14 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  build       - Build the Debian package"
-	@echo "  download    - Download SDK and Python wheel"
-	@echo "  clean       - Clean build artifacts"
-	@echo "  clean-all   - Clean everything including downloads"
-	@echo "  check-deps  - Check build dependencies"
-	@echo "  help        - Show this help"
+	@echo "  build        - Build the Debian package"
+	@echo "  docker-build - Build in Docker container (recommended)"
+	@echo "  docker-shell - Interactive Docker shell"
+	@echo "  download     - Download SDK and Python wheel"
+	@echo "  clean        - Clean build artifacts"
+	@echo "  clean-all    - Clean everything including downloads"
+	@echo "  check-deps   - Check build dependencies"
+	@echo "  help         - Show this help"
 
 check-deps:
 	@echo "Checking build dependencies..."
@@ -53,3 +55,11 @@ clean:
 clean-all: clean
 	@echo "Removing downloaded files..."
 	rm -f $(RUN_FILE) $(WHL_FILE)
+
+docker-build:
+	@echo "Building $(PKG_NAME) $(PKG_VERSION) in Docker (Ubuntu 22.04 environment)..."
+	cd docker && ./docker-build.sh
+
+docker-shell:
+	@echo "Starting interactive shell in Docker container..."
+	cd docker && ./docker-build.sh --interactive
