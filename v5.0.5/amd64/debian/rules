@@ -95,6 +95,10 @@ override_dh_auto_install:
 	# Create library configuration
 	echo "/usr/local/zed/lib" > $(DEB_DESTDIR)/etc/ld.so.conf.d/001-zed.conf
 
+	# Install pkg-config file
+	mkdir -p $(DEB_DESTDIR)/usr/lib/x86_64-linux-gnu/pkgconfig
+	sed "s/@VERSION@/$(ZED_VERSION)/g" $(CURDIR)/zed.pc.in > $(DEB_DESTDIR)/usr/lib/x86_64-linux-gnu/pkgconfig/zed.pc
+
 	# Install Python wheel
 	@echo "Installing Python wheel..."
 	python3 -m pip install --no-deps --root=$(DEB_DESTDIR) --prefix=/usr \
